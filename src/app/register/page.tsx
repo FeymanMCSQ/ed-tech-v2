@@ -33,7 +33,7 @@ export default function RegisterPage() {
                 });
             } else {
                 setSuccess(true);
-                setTimeout(() => router.push("/login"), 2000);
+                setTimeout(() => router.push("/"), 1500);
             }
         } catch (err) {
             setError({ message: "An unexpected error occurred", code: "INTERNAL_ERROR" });

@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<{ message: string, code?: string } | null>(null);
     const [success, setSuccess] = useState(false);
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,6 +32,8 @@ export default function LoginPage() {
                 });
             } else {
                 setSuccess(true);
+                // Redirect after success
+                setTimeout(() => router.push("/"), 1500);
             }
         } catch (err) {
             setError({ message: "An unexpected error occurred", code: "INTERNAL_ERROR" });

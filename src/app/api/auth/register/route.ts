@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import db from "@/data/db";
 import { RegisterSchema, hashPassword } from "@/domain/auth";
 import { randomUUID } from "node:crypto";
@@ -39,6 +40,15 @@ export async function POST(request: Request) {
                 passwordHash,
                 displayName,
             },
+        });
+
+        const cookieStore = await cookies();
+        cookieStore.set("auth-user-id", user.id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24 * 7, // 1 week
+            path: "/",
         });
 
         return NextResponse.json(

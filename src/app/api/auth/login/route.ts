@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import db from "@/data/db";
 import { LoginSchema, verifyPassword } from "@/domain/auth";
 
@@ -45,7 +46,15 @@ export async function POST(request: Request) {
         }
 
         // In a real app, we would set a session cookie here.
-        // For this test, we just return success.
+        const cookieStore = await cookies();
+        cookieStore.set("auth-user-id", user.id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24 * 7, // 1 week
+            path: "/",
+        });
+
         return NextResponse.json(
             { success: true, data: { userId: user.id, email: user.email, displayName: user.displayName } },
             { status: 200 }
