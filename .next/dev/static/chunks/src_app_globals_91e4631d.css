@@ -1,0 +1,162 @@
+/* [project]/src/app/globals.css [app-client] (css) */
+:root {
+  --bg-primary: #0b0f14;
+  --bg-secondary: #141a22;
+  --surface: #1a212b;
+  --border: #ffffff0f;
+  --text-primary: #e6edf3;
+  --text-secondary: #9aa4b2;
+  --text-muted: #6b7280;
+  --error: #ff5d5d;
+  --success: #3ddc97;
+  --accent: #3b82f6;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  display: flex;
+}
+
+.panel {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  padding: var(--space-8);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 24px #0003;
+}
+
+h1 {
+  margin-bottom: var(--space-6);
+  letter-spacing: -.02em;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.form-group {
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-direction: column;
+  display: flex;
+}
+
+.input-container {
+  gap: var(--space-2);
+  flex-direction: column;
+  display: flex;
+}
+
+label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+input {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 15px;
+  transition: border-color .15s;
+}
+
+input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+button {
+  background-color: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: opacity .15s;
+}
+
+button:hover {
+  opacity: .9;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.error-box {
+  border: 1px solid var(--error);
+  margin-bottom: var(--space-6);
+  background-color: #ff5d5d1a;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.error-message {
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.error-code {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+  font-family: monospace;
+  font-size: 11px;
+  display: block;
+}
+
+.success-box {
+  border: 1px solid var(--success);
+  margin-bottom: var(--space-6);
+  color: var(--success);
+  background-color: #3ddc971a;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+}
+
+.link-text {
+  margin-top: var(--space-6);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.link-text a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.link-text a:hover {
+  text-decoration: underline;
+}
+
+/*# sourceMappingURL=src_app_globals_91e4631d.css.map*/

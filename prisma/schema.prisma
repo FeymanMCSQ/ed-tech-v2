@@ -1,0 +1,259 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id                String  @id
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model AnalyticsEvent {
+  id         String   @id
+  createdAt  DateTime @default(now())
+  problemId  String
+  correct    Boolean
+  responseMs Int
+}
+
+model Archetype {
+  id            String          @id
+  slug          String          @unique
+  title         String
+  stream        Stream?
+  order         Int
+  summary       String?
+  eloMax        Int             @default(1900)
+  eloMin        Int             @default(200)
+  domainId      String?
+  Domain        Domain?         @relation(fields: [domainId], references: [id])
+  Lesson        Lesson[]
+  Problem       Problem[]
+  UserArchetype UserArchetype[]
+
+  @@unique([stream, order])
+  @@index([domainId])
+}
+
+model Attempt {
+  id           String   @id
+  createdAt    DateTime @default(now())
+  userId       String?
+  problemId    String
+  chosen       String?
+  correct      Boolean
+  timeMs       Int
+  deltaUser    Int
+  deltaProblem Int
+  guestId      String?
+  freeResponse String?
+  normalized   String?
+  score        Decimal? @db.Decimal(4, 3)
+  Problem      Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  User         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([guestId])
+  @@index([problemId])
+  @@index([userId])
+}
+
+model Domain {
+  id             String           @id
+  slug           String           @unique
+  title          String
+  order          Int              @default(1)
+  summary        String?
+  subjectId      String
+  Archetype      Archetype[]
+  Subject        Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  UserMetaDomain UserMetaDomain[]
+
+  @@index([subjectId])
+}
+
+model GenerationLog {
+  id             String   @id
+  createdAt      DateTime @default(now())
+  prompt         String
+  outcome        String
+  attempts       Int
+  latencyMs      Int?
+  errors         Json?
+  problemsParsed Int      @default(0)
+  model          String?
+  tokensUsed     Int?
+}
+
+model Lesson {
+  id           String     @id
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  archetypeId  String
+  kind         LessonKind
+  title        String
+  bodyMarkdown String
+  order        Int
+  published    Boolean    @default(false)
+  Archetype    Archetype  @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+
+  @@unique([archetypeId, order])
+  @@index([archetypeId])
+}
+
+model Problem {
+  id                 String        @id
+  createdAt          DateTime      @default(now())
+  promptLatex        String        @unique
+  choices            Json?
+  correctChoice      String?
+  seedRating         Int
+  rating             Int
+  topic              String
+  tags               String[]
+  solutions          String?
+  attemptCount       Int           @default(0)
+  correctExpr        Json?
+  correctNumeric     Json?
+  openRubric         Json?
+  type               ProblemType   @default(MCQ)
+  requireForm        String[]      @default([])
+  archetypeId        String?
+  generationMetadata Json?
+  promptSegments     Json?
+  Attempt            Attempt[]
+  Archetype          Archetype?    @relation(fields: [archetypeId], references: [id])
+  RatingEvent        RatingEvent[]
+
+  @@index([archetypeId])
+  @@index([rating])
+}
+
+model RatingEvent {
+  id        String   @id
+  createdAt DateTime @default(now())
+  userId    String?
+  problemId String?
+  before    Int
+  after     Int
+  delta     Int
+  reason    String
+  Problem   Problem? @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  User      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id           String   @id
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subject {
+  id        String   @id
+  slug      String   @unique
+  title     String
+  order     Int      @default(1)
+  summary   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Domain    Domain[]
+}
+
+model User {
+  id             String           @id
+  email          String?          @unique
+  createdAt      DateTime         @default(now())
+  displayName    String?
+  rating         Int              @default(600)
+  passwordHash   String?
+  attemptCount   Int              @default(0)
+  gold           Int              @default(0)
+  lessonsEntered Int              @default(0)
+  xp             Int              @default(0)
+  Account        Account[]
+  Attempt        Attempt[]
+  RatingEvent    RatingEvent[]
+  Session        Session[]
+  UserArchetype  UserArchetype[]
+  UserMetaDomain UserMetaDomain[]
+}
+
+model UserArchetype {
+  id           String    @id
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime
+  userId       String
+  archetypeId  String
+  rating       Int       @default(200)
+  attemptCount Int       @default(0)
+  streak       Int       @default(0)
+  lastPlayedAt DateTime  @default(now())
+  Archetype    Archetype @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+  User         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, archetypeId])
+  @@index([archetypeId])
+  @@index([userId])
+}
+
+model UserMetaDomain {
+  id           String   @id
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  userId       String
+  domainId     String
+  rating       Int      @default(400)
+  attemptCount Int      @default(0)
+  streak       Int      @default(0)
+  lastPlayedAt DateTime @default(now())
+  Domain       Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, domainId])
+  @@index([domainId])
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum LessonKind {
+  HEURISTIC
+  WORKED_EXAMPLE
+  PRACTICE_GUIDE
+}
+
+enum ProblemType {
+  MCQ
+  NUMERIC
+  EXPRESSION
+  OPEN
+}
+
+enum Stream {
+  VC
+  CA
+}
