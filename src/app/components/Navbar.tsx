@@ -53,7 +53,11 @@ export default function Navbar() {
         <nav className="navbar">
             <div className="navbar-inner">
                 <Link href="/" className="brand">
-                    Feynman
+                    <img
+                        src="/icons/icon-512.png"
+                        alt="Feynman"
+                        style={{ height: '32px', width: 'auto', display: 'block' }}
+                    />
                 </Link>
 
                 <div className="nav-controls">

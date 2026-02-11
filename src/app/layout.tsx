@@ -8,6 +8,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
     title: "Archetype Learning Engine",
     description: "Granular skill calibration platform",
+    icons: {
+        icon: "/icons/icon-32.png",
+        shortcut: "/icons/icon-32.png",
+        apple: "/icons/icon-128.png",
+    },
 };
 
 export default function RootLayout({
