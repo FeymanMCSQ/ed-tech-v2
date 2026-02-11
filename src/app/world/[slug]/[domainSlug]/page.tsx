@@ -105,6 +105,10 @@ function ArchetypeCard({
             href={`/play/${worldSlug}/${domainSlug}/${archetype.slug}`}
             className="world-card enrolled"
             data-domain={worldSlug === 'math' ? 'mathematics' : worldSlug}
+            onClick={() => {
+                const audio = new Audio('/sfx/card_1.mp3');
+                audio.play().catch(e => console.error("Audio playback stalled", e));
+            }}
         >
             <div className="world-content">
                 <h2>{archetype.title}</h2>

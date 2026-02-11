@@ -138,12 +138,23 @@ function DomainCard({
                 <p className="tagline">{domain.summary || "Explore the fundamental archetypes of this sector."}</p>
 
                 {domain.isEnrolled ? (
-                    <Link href={`/world/${worldSlug}/${domain.slug}`} className="enter-link">
+                    <Link
+                        href={`/world/${worldSlug}/${domain.slug}`}
+                        className="enter-link"
+                        onClick={() => {
+                            const audio = new Audio('/sfx/card_1.mp3');
+                            audio.play().catch(e => console.error("Audio playback stalled", e));
+                        }}
+                    >
                         Resume Calibration
                     </Link>
                 ) : (
                     <button
-                        onClick={onEnroll}
+                        onClick={() => {
+                            const audio = new Audio('/sfx/card_1.mp3');
+                            audio.play().catch(e => console.error("Audio playback stalled", e));
+                            onEnroll();
+                        }}
                         className={`enter-link ${isEnrolling ? 'btn-loading' : ''}`}
                         disabled={isEnrolling}
                         style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', textAlign: 'left' }}

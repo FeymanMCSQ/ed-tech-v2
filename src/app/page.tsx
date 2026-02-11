@@ -83,7 +83,15 @@ function WorldCard({ world }: { world: World }) {
     const activeSteps = rating >= 2000 ? 5 : rating >= 1700 ? 4 : rating >= 1400 ? 3 : rating >= 800 ? 2 : rating > 0 ? 1 : 0;
 
     return (
-        <Link href={`/world/${world.slug}`} className={`world-card ${world.isEnrolled ? "enrolled" : ""}`} data-domain={world.slug}>
+        <Link
+            href={`/world/${world.slug}`}
+            className={`world-card ${world.isEnrolled ? "enrolled" : ""}`}
+            data-domain={world.slug}
+            onClick={() => {
+                const audio = new Audio('/sfx/card_1.mp3');
+                audio.play().catch(e => console.error("Audio playback stalled", e));
+            }}
+        >
             <div className="world-content">
                 <h2>{world.title}</h2>
                 <p className="tagline">{world.summary || "Explore the fundamental abstractions of this realm."}</p>
