@@ -205,7 +205,13 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
                             <button
                                 key={choice.id}
                                 className={cardClass}
-                                onClick={() => !isVerified && setSelectedChoice(choice.id)}
+                                onClick={() => {
+                                    if (!isVerified) {
+                                        setSelectedChoice(choice.id);
+                                        const audio = new Audio('/sfx/select_1.mp3');
+                                        audio.play().catch(e => console.error("Selection audio stalled", e));
+                                    }
+                                }}
                                 disabled={isVerified}
                                 style={{ opacity: isVerified && !isSelected && !isCorrectAnswer ? 0.4 : 1 }}
                             >
