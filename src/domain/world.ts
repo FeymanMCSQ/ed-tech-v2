@@ -38,6 +38,7 @@ export interface ArchetypeView {
     summary: string | null;
     rating: number; // For enrolled users, this will be their current rating (e.g. 200)
     tier: WorldTier;
+    attemptCount: number;
 }
 
 export interface DomainDetail {
@@ -166,7 +167,11 @@ export function formatDomainDetail(
     userArchetypes: any[]
 ): DomainDetail {
     const userRatings = new Map<string, number>();
-    userArchetypes.forEach(ua => userRatings.set(ua.archetypeId, ua.rating));
+    const userAttempts = new Map<string, number>();
+    userArchetypes.forEach(ua => {
+        userRatings.set(ua.archetypeId, ua.rating);
+        userAttempts.set(ua.archetypeId, ua.attemptCount || 0);
+    });
 
     const archetypes: ArchetypeView[] = domain.Archetype.map((arch: any) => {
         const rating = userRatings.get(arch.id) || 0;
@@ -176,7 +181,8 @@ export function formatDomainDetail(
             title: arch.title,
             summary: arch.summary,
             rating,
-            tier: calculateTier(rating)
+            tier: calculateTier(rating),
+            attemptCount: userAttempts.get(arch.id) || 0
         };
     });
 

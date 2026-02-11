@@ -128,7 +128,11 @@ function ArchetypeCard({
             <div className="world-footer">
                 <div className="rating-container">
                     <span className="rating-label">Local Rating</span>
-                    <span className="rating-value">{archetype.rating || "200"}</span>
+                    <span className="rating-value">{rating || "200"}</span>
+                </div>
+                <div className="rating-container" style={{ marginLeft: 'auto', marginRight: 'var(--space-4)', textAlign: 'right' }}>
+                    <span className="rating-label">Attempts</span>
+                    <span className="rating-value" style={{ opacity: 0.8 }}>{archetype.attemptCount}</span>
                 </div>
                 <span className="tier-label">{archetype.tier}</span>
             </div>
