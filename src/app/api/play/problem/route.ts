@@ -62,39 +62,57 @@ export async function GET(request: Request) {
         // Find problems for this archetype with rating in [rating - 200, rating + 200]
         // In a real system, this would be more complex (e.g. tracking seen problems)
         const problems = await db.problem.findMany({
-            where: {
-                archetypeId: archetype.id,
-                rating: {
-                    gte: userRating - 200,
-                    lte: userRating + 200
-                }
-            },
+        },
+            select: {
+            id: true,
+            type: true,
+            promptLatex: true,
+            choices: true,
+            topic: true,
+            tags: true,
+            rating: true,
+            solutions: true,
+            archetypeId: true
+        },
             take: 10
         });
 
-        const selectedProblem = problems.length > 0
-            ? problems[Math.floor(Math.random() * problems.length)]
-            : await db.problem.findFirst({ where: { archetypeId: archetype.id } });
-
-        if (!selectedProblem) {
-            return NextResponse.json(
-                { success: false, error: { code: "NO_PROBLEMS", message: "No problems available for this calibration level" } },
-                { status: 404 }
-            );
-        }
-
-        const formatted = formatProblemView(selectedProblem, userRating);
-
-        return NextResponse.json({
-            success: true,
-            data: formatted
+    const selectedProblem = problems.length > 0
+        ? problems[Math.floor(Math.random() * problems.length)]
+        : await db.problem.findFirst({
+            where: { archetypeId: archetype.id },
+            select: {
+                id: true,
+                type: true,
+                promptLatex: true,
+                choices: true,
+                topic: true,
+                tags: true,
+                rating: true,
+                solutions: true,
+                archetypeId: true
+            }
         });
 
-    } catch (error) {
-        console.error("Problem selection failure:", error);
+    if (!selectedProblem) {
         return NextResponse.json(
-            { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to fetch calibration problem" } },
-            { status: 500 }
+            { success: false, error: { code: "NO_PROBLEMS", message: "No problems available for this calibration level" } },
+            { status: 404 }
         );
     }
+
+    const formatted = formatProblemView(selectedProblem, userRating);
+
+    return NextResponse.json({
+        success: true,
+        data: formatted
+    });
+
+} catch (error) {
+    console.error("Problem selection failure:", error);
+    return NextResponse.json(
+        { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to fetch calibration problem" } },
+        { status: 500 }
+    );
+}
 }

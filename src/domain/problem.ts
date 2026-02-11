@@ -14,6 +14,7 @@ export interface ProblemView {
     tags: string[];
     rating: number;
     userRating?: number;
+    solutions?: string;
 }
 
 export function formatProblemView(problem: any, userRating?: number): ProblemView {
@@ -58,6 +59,31 @@ export function formatProblemView(problem: any, userRating?: number): ProblemVie
         topic: problem.topic,
         tags: problem.tags,
         rating: problem.rating,
-        userRating
+        userRating,
+        solutions: problem.solutions
     };
+}
+
+/**
+ * Calculates the mastery rating adjustment after a calibration attempt.
+ * Implements a simplified ELO curve.
+ */
+export function calculateRatingDelta(
+    userRating: number,
+    problemRating: number,
+    isCorrect: boolean
+): number {
+    const K = 32; // Base sensitivity
+    const SENSITIVITY = 400; // ELO curve width
+
+    // Expected probability of success based on rating difference
+    const expected = 1 / (1 + Math.pow(10, (problemRating - userRating) / SENSITIVITY));
+    const result = isCorrect ? 1 : 0;
+
+    const delta = Math.round(K * (result - expected));
+
+    // Clamp absolute change to [1, K] to ensure every attempt matters
+    if (delta === 0) return isCorrect ? 1 : -1;
+
+    return delta;
 }

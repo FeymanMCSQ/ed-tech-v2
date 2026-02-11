@@ -10,16 +10,26 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+    const [prefetchedAnswer, setPrefetchedAnswer] = useState<string | null>(null);
+    const [isVerified, setIsVerified] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [startTime, setStartTime] = useState<number>(0);
 
     async function fetchProblem() {
         setLoading(true);
         setError(null);
         setSelectedChoice(null);
+        setPrefetchedAnswer(null);
+        setIsVerified(false);
+        setIsSubmitting(false);
         try {
             const res = await fetch(`/api/play/problem?archetypeSlug=${archetypeSlug}`);
             const result = await res.json();
             if (result.success) {
                 setProblem(result.data);
+                setStartTime(Date.now());
+                // Prefetch answer
+                fetchAnswer(result.data.id);
             } else {
                 setError(result.error.message);
             }
@@ -30,11 +40,23 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
         }
     }
 
+    async function fetchAnswer(problemId: string) {
+        try {
+            const res = await fetch(`/api/play/validate-prefetch?problemId=${problemId}`);
+            const result = await res.json();
+            if (result.success) {
+                setPrefetchedAnswer(result.data.correctChoice);
+            }
+        } catch (err) {
+            console.error("Prefetch failed", err);
+        }
+    }
+
     useEffect(() => {
         fetchProblem();
     }, [archetypeSlug]);
 
-    // Inject Katex for LaTeX rendering
+    // Katex rendering logic...
     useEffect(() => {
         if (!document.getElementById('katex-css')) {
             const link = document.createElement('link');
@@ -44,6 +66,21 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
             document.head.appendChild(link);
         }
 
+        const renderMath = () => {
+            // @ts-ignore
+            if (window.renderMathInElement) {
+                // @ts-ignore
+                window.renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '\\[', right: '\\]', display: true }
+                    ]
+                });
+            }
+        };
+
         if (!window.hasOwnProperty('renderMathInElement')) {
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
@@ -51,33 +88,42 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
             script.onload = () => {
                 const autoRender = document.createElement('script');
                 autoRender.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js';
-                autoRender.onload = () => {
-                    // @ts-ignore
-                    window.renderMathInElement(document.body, {
-                        delimiters: [
-                            { left: '$$', right: '$$', display: true },
-                            { left: '$', right: '$', display: false },
-                            { left: '\\(', right: '\\)', display: false },
-                            { left: '\\[', right: '\\]', display: true }
-                        ]
-                    });
-                };
+                autoRender.onload = renderMath;
                 document.head.appendChild(autoRender);
             };
             document.head.appendChild(script);
         } else {
-            // Re-render if already exists
-            // @ts-ignore
-            if (window.renderMathInElement) {
-                // @ts-ignore
-                window.renderMathInElement(document.body);
-            }
+            renderMath();
         }
-    }, [problem]);
+    }, [problem, isVerified]);
 
     const handleSubmit = async () => {
-        if (!selectedChoice) return;
-        alert(`Selected Choice: ${selectedChoice}. Submission logic pending calibration engine update.`);
+        if (!selectedChoice || !problem || isVerified) return;
+
+        setIsVerified(true);
+        setIsSubmitting(true);
+
+        const timeMs = Date.now() - startTime;
+
+        try {
+            const res = await fetch('/api/play/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    problemId: problem.id,
+                    chosenId: selectedChoice,
+                    timeMs
+                })
+            });
+            const result = await res.json();
+            if (result.success) {
+                // Optionally update UI with result.data.newRating
+            }
+        } catch (err) {
+            console.error("Submission failed", err);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (loading) {
@@ -100,6 +146,8 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
             </div>
         );
     }
+
+    const isCorrect = isVerified && selectedChoice === prefetchedAnswer;
 
     return (
         <div className="play-container">
@@ -125,6 +173,11 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
                     <div className="rating-label" style={{ fontSize: '12px', opacity: 0.6 }}>
                         CALIBRATION REQ: {problem.rating}
                     </div>
+                    {isVerified && (
+                        <div className={`rating-label ${isCorrect ? 'text-success' : 'text-error'}`} style={{ fontWeight: 700 }}>
+                            {isCorrect ? 'VERIFICATION SUCCESSFUL' : 'CALIBRATION DRIFT DETECTED'}
+                        </div>
+                    )}
                 </div>
 
                 <div className="problem-prompt">
@@ -132,27 +185,67 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
                 </div>
 
                 <div className="choice-grid">
-                    {problem.choices.map((choice) => (
-                        <button
-                            key={choice.id}
-                            className={`choice-card ${selectedChoice === choice.id ? 'selected' : ''}`}
-                            onClick={() => setSelectedChoice(choice.id)}
-                        >
-                            <span className="choice-id">{choice.id}</span>
-                            <span className="choice-content">{choice.content}</span>
-                        </button>
-                    ))}
+                    {problem.choices.map((choice) => {
+                        const isSelected = selectedChoice === choice.id;
+                        const isCorrectAnswer = isVerified && choice.id === prefetchedAnswer;
+                        const isWrongSelection = isVerified && isSelected && choice.id !== prefetchedAnswer;
+
+                        let cardClass = "choice-card";
+                        if (isSelected) cardClass += " selected";
+                        if (isCorrectAnswer) cardClass += " correct-stable";
+                        if (isWrongSelection) cardClass += " wrong-stable";
+
+                        return (
+                            <button
+                                key={choice.id}
+                                className={cardClass}
+                                onClick={() => !isVerified && setSelectedChoice(choice.id)}
+                                disabled={isVerified}
+                                style={{ opacity: isVerified && !isSelected && !isCorrectAnswer ? 0.4 : 1 }}
+                            >
+                                <span className="choice-id">{choice.id}</span>
+                                <span className="choice-content">{choice.content}</span>
+                            </button>
+                        );
+                    })}
                 </div>
 
                 <div className="play-footer">
-                    <button
-                        onClick={handleSubmit}
-                        className="btn-submit"
-                        disabled={!selectedChoice}
-                    >
-                        Verify Calibration
-                    </button>
+                    {!isVerified ? (
+                        <button
+                            onClick={handleSubmit}
+                            className="btn-submit"
+                            disabled={!selectedChoice || isSubmitting}
+                        >
+                            {isSubmitting ? "PROCESSING..." : "Verify Calibration"}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={fetchProblem}
+                            className="btn-submit"
+                            style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
+                        >
+                            Next Problem →
+                        </button>
+                    )}
                 </div>
+
+                {isVerified && problem.solutions && (
+                    <div style={{
+                        marginTop: 'var(--space-12)',
+                        padding: 'var(--space-8)',
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '12px'
+                    }}>
+                        <div className="rating-label" style={{ marginBottom: 'var(--space-4)', opacity: 0.8 }}>
+                            SOLUTION REVEALED
+                        </div>
+                        <div style={{ lineHeight: 1.6, fontSize: '15px' }}>
+                            {problem.solutions}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
