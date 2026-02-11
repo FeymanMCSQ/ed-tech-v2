@@ -15,6 +15,12 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [startTime, setStartTime] = useState<number>(0);
 
+    // Joy States
+    const [streak, setStreak] = useState(0);
+    const [displayRating, setDisplayRating] = useState<number | null>(null);
+    const [isPulsing, setIsPulsing] = useState(false);
+    const [ratingDelta, setRatingDelta] = useState<number | null>(null);
+
     async function fetchProblem() {
         setLoading(true);
         setError(null);
@@ -22,12 +28,14 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
         setPrefetchedAnswer(null);
         setIsVerified(false);
         setIsSubmitting(false);
+        setRatingDelta(null);
         try {
             const res = await fetch(`/api/play/problem?archetypeSlug=${archetypeSlug}`);
             const result = await res.json();
             if (result.success) {
                 setProblem(result.data);
                 setStartTime(Date.now());
+                if (displayRating === null) setDisplayRating(result.data.userRating);
                 // Prefetch answer
                 fetchAnswer(result.data.id);
             } else {
@@ -56,6 +64,35 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
         fetchProblem();
     }, [archetypeSlug]);
 
+    // Rating Animation Helper
+    const animateRating = (target: number) => {
+        if (displayRating === null) {
+            setDisplayRating(target);
+            return;
+        }
+
+        const start = displayRating;
+        const duration = 300; // ms
+        const startTime = performance.now();
+
+        const update = (now: number) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Ease out elastic-ish overshoot
+            const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            const current = Math.round(start + (target - start) * eased);
+
+            setDisplayRating(current);
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            }
+        };
+
+        requestAnimationFrame(update);
+    };
+
     // Katex rendering logic...
     useEffect(() => {
         if (!document.getElementById('katex-css')) {
@@ -81,7 +118,9 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
             }
         };
 
-        if (!window.hasOwnProperty('renderMathInElement')) {
+        if (window.hasOwnProperty('renderMathInElement')) {
+            renderMath();
+        } else {
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
             script.async = true;
@@ -92,24 +131,34 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
                 document.head.appendChild(autoRender);
             };
             document.head.appendChild(script);
-        } else {
-            renderMath();
         }
     }, [problem, isVerified]);
 
     const handleSubmit = async () => {
         if (!selectedChoice || !problem || isVerified) return;
 
-        setIsVerified(true);
+        setIsPulsing(true);
         setIsSubmitting(true);
 
         const timeMs = Date.now() - startTime;
         const isCorrectResult = selectedChoice === prefetchedAnswer;
 
+        // Mandated Suspense Delay (180ms)
+        await new Promise(resolve => setTimeout(resolve, 180));
+
+        setIsPulsing(false);
+        setIsVerified(true);
+
         // Play feedback sound
         const audioPath = isCorrectResult ? '/sfx/correct_2.mp3' : '/sfx/wrong_1.mp3';
         const audio = new Audio(audioPath);
         audio.play().catch(e => console.error("Audio playback stalled", e));
+
+        if (isCorrectResult) {
+            setStreak(prev => prev + 1);
+        } else {
+            setStreak(0);
+        }
 
         try {
             const res = await fetch('/api/play/submit', {
@@ -122,8 +171,10 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
                 })
             });
             const result = await res.json();
-            if (result.success) {
-                // Optionally update UI with result.data.newRating
+            if (result.success && result.data.newRating) {
+                const delta = result.data.newRating - (problem.userRating || 0);
+                setRatingDelta(delta);
+                animateRating(result.data.newRating);
             }
         } catch (err) {
             console.error("Submission failed", err);
@@ -135,7 +186,7 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
     if (loading) {
         return (
             <div className="home-container" style={{ textAlign: "center", justifyContent: "center", minHeight: "60vh" }}>
-                <div className="rating-label">Isolating Variables</div>
+                <div className="rating-label" style={{ animation: 'pulse-opacity 1s infinite' }}>Isolating Variables</div>
                 <h1>CALIBRATING PROBLEM...</h1>
             </div>
         );
@@ -154,43 +205,103 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
     }
 
     const isCorrect = isVerified && selectedChoice === prefetchedAnswer;
+    const streakHeatClass = streak >= 6 ? "streak-heat-3" : streak >= 4 ? "streak-heat-2" : streak >= 2 ? "streak-heat-1" : "";
 
     return (
-        <div className="play-container">
-            <header className="home-header">
-                <div>
-                    <Link href={`/world/${worldSlug}/${domainSlug}`} className="rating-label" style={{
-                        textDecoration: "none",
-                        transition: "color 150ms ease"
-                    }}>
-                        ← ABANDON SESSION
-                    </Link>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '16px' }}>
-                        <h1 style={{ margin: 0 }}>{problem.topic}</h1>
-                        <div className="tier-label" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                            YOUR STANDING: {problem.userRating ?? "---"}
+        <div className={`play-container ${streakHeatClass}`}>
+            <header className="home-header" style={{ borderBottom: 'none', marginBottom: 'var(--space-6)', paddingBottom: 0 }}>
+                <div style={{ width: '100%', display: 'flex', gap: '32px' }}>
+                    <div style={{ flex: 1 }}>
+                        <Link href={`/world/${worldSlug}/${domainSlug}`} className="rating-label" style={{
+                            textDecoration: "none",
+                            opacity: 0.5
+                        }}>
+                            ← ABANDON SESSION
+                        </Link>
+                        <h1 style={{ marginTop: '8px', fontSize: '28px' }}>{problem.topic}</h1>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', opacity: 0.3, marginTop: '4px' }}>
+                            {problem.tags.slice(0, 3).map(tag => (
+                                <span key={tag} className="rating-label" style={{ fontSize: '9px' }}>
+                                    #{tag.toUpperCase()}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '24px' }}>
+                        <div className="rating-container" style={{ textAlign: 'right' }}>
+                            <span className="rating-label">Status</span>
+                            <span className="rating-value" style={{
+                                color: streak > 0 ? 'var(--accent)' : 'inherit',
+                                fontSize: '18px',
+                                textShadow: streak >= 4 ? '0 0 15px var(--accent)' : 'none'
+                            }}>
+                                STREAK {streak}
+                            </span>
+                        </div>
+                        <div className="rating-container" style={{ textAlign: 'right' }}>
+                            <span className="rating-label">Calibration</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                                <span className={`rating-value ${ratingDelta ? 'rating-tick-up' : ''}`} style={{ fontSize: '18px' }}>
+                                    {displayRating ?? problem.userRating ?? "---"}
+                                </span>
+                                {ratingDelta && (
+                                    <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--success)' }}>
+                                        +{ratingDelta}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Vertical Mastery Ladder Visual */}
+                        <div style={{
+                            width: '12px',
+                            height: '60px',
+                            background: 'var(--border)',
+                            borderRadius: '6px',
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column-reverse',
+                            padding: '2px',
+                            gap: '2px'
+                        }} title="Mastery Ascent">
+                            {[...Array(5)].map((_, i) => (
+                                <div key={i} style={{
+                                    flex: 1,
+                                    borderRadius: '2px',
+                                    background: ((displayRating || 200) / 1900) * 5 > i ? 'var(--accent)' : 'transparent',
+                                    boxShadow: ((displayRating || 200) / 1900) * 5 > i ? '0 0 8px var(--accent)' : 'none',
+                                    opacity: ((displayRating || 200) / 1900) * 5 > i ? 1 : 0.2,
+                                    transition: 'all 0.6s var(--ease-out-quint)'
+                                }} />
+                            ))}
                         </div>
                     </div>
                 </div>
             </header>
 
-            <div className="problem-container">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
-                    <div className="rating-label" style={{ fontSize: '12px', opacity: 0.6 }}>
-                        CALIBRATION REQ: {problem.rating}
+            <div className={`problem-container ${isCorrect ? 'correct-glow' : ''}`} style={{ padding: 'var(--space-8)', gap: 'var(--space-6)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="rating-label" style={{ fontSize: '11px', opacity: 0.5 }}>
+                        DOMAIN DEPTH: {problem.rating}
                     </div>
                     {isVerified && (
-                        <div className={`rating-label ${isCorrect ? 'text-success' : 'text-error'}`} style={{ fontWeight: 700 }}>
-                            {isCorrect ? 'VERIFICATION SUCCESSFUL' : 'CALIBRATION DRIFT DETECTED'}
+                        <div className={`rating-label ${isCorrect ? 'text-success' : 'text-error'}`} style={{
+                            fontWeight: 900,
+                            letterSpacing: '0.15em',
+                            fontSize: '11px',
+                            animation: isCorrect ? 'none' : 'wrong-shake 0.3s'
+                        }}>
+                            {isCorrect ? '✓ VERIFIED' : '✗ DRIFT'}
                         </div>
                     )}
                 </div>
 
-                <div className="problem-prompt">
+                <div className="problem-prompt" style={{ minHeight: '80px', fontSize: '20px' }}>
                     {problem.promptLatex}
                 </div>
 
-                <div className="choice-grid">
+                <div className="choice-grid" style={{ marginTop: '0' }}>
                     {problem.choices.map((choice) => {
                         const isSelected = selectedChoice === choice.id;
                         const isCorrectAnswer = isVerified && choice.id === prefetchedAnswer;
@@ -213,7 +324,10 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
                                     }
                                 }}
                                 disabled={isVerified}
-                                style={{ opacity: isVerified && !isSelected && !isCorrectAnswer ? 0.4 : 1 }}
+                                style={{
+                                    opacity: isVerified && !isSelected && !isCorrectAnswer ? 0.3 : 1,
+                                    transition: 'opacity 0.4s ease'
+                                }}
                             >
                                 <span className="choice-id">{choice.id}</span>
                                 <span className="choice-content">{choice.content}</span>
@@ -226,16 +340,21 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
                     {!isVerified ? (
                         <button
                             onClick={handleSubmit}
-                            className="btn-submit"
+                            className={`btn-submit ${isPulsing ? 'suspense' : ''}`}
                             disabled={!selectedChoice || isSubmitting}
                         >
-                            {isSubmitting ? "PROCESSING..." : "Verify Calibration"}
+                            {isPulsing ? "CALIBRATING..." : isSubmitting ? "PROCESSING..." : "Verify Calibration"}
                         </button>
                     ) : (
                         <button
                             onClick={fetchProblem}
                             className="btn-submit"
-                            style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
+                            style={{
+                                background: 'var(--text-primary)',
+                                color: 'var(--bg-primary)',
+                                paddingLeft: 'var(--space-12)',
+                                paddingRight: 'var(--space-12)'
+                            }}
                         >
                             Next Problem →
                         </button>
@@ -244,29 +363,37 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
 
                 {isVerified && problem.solutions && (
                     <div style={{
-                        marginTop: 'var(--space-12)',
+                        marginTop: 'var(--space-8)',
                         padding: 'var(--space-8)',
-                        background: 'rgba(255,255,255,0.02)',
+                        background: 'rgba(255,255,255,0.03)',
                         border: '1px solid var(--border)',
-                        borderRadius: '12px'
+                        borderRadius: '12px',
+                        animation: 'fadeIn 0.4s ease-out'
                     }}>
                         <div className="rating-label" style={{ marginBottom: 'var(--space-4)', opacity: 0.8 }}>
-                            SOLUTION REVEALED
+                            SOLUTION PROTOCOL
                         </div>
-                        <div style={{ lineHeight: 1.6, fontSize: '15px' }}>
+                        <div style={{ lineHeight: 1.6, fontSize: '16px', color: 'var(--text-secondary)' }}>
                             {problem.solutions}
                         </div>
                     </div>
                 )}
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', opacity: 0.4 }}>
                 {problem.tags.map(tag => (
-                    <span key={tag} className="rating-label" style={{ fontSize: '10px', background: 'rgba(255,255,255,0.03)', padding: '4px 8px', borderRadius: '4px' }}>
+                    <span key={tag} className="rating-label" style={{ fontSize: '10px' }}>
                         #{tag.toUpperCase()}
                     </span>
                 ))}
             </div>
+
+            <style jsx>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
         </div>
     );
 }
