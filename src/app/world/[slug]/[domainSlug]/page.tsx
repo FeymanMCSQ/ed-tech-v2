@@ -137,17 +137,18 @@ function ArchetypeCard({
     domainSlug: string;
     accentColor: string;
 }) {
-    // Safety fallback for accent color
-    const accentColor = propAccent || (worldSlug === 'math' ? '#4F8CFF' : worldSlug === 'physics' ? '#9C6BFF' : worldSlug === 'comedy' ? '#FFB547' : '#3B82F6');
+    // Standardize accent color across all components
+    const accent = propAccent || (worldSlug === 'math' ? '#4F8CFF' : worldSlug === 'physics' ? '#9C6BFF' : worldSlug === 'comedy' ? '#FFB547' : '#3B82F6');
 
-    // Explicit number parsing for rating (Scale: 200-1900)
-    const rating = Number(archetype.rating) || 200;
+    // Explicit rating parsing
+    const rating = Math.round(Number(archetype.rating) || 200);
 
-    // Calculate segments (1-5)
-    // 200 should be 1 segment, 1900 should be 5 segments
-    // Progress = (rating - 200) / 1700
-    const progress = Math.max(0, Math.min(1, (rating - 200) / 1700));
-    const masterSegs = Math.min(Math.max(Math.floor(progress * 5) + 1, 1), 5);
+    // Explicit Mastery Staircase (Range: 200-1900)
+    let mastery = 1;
+    if (rating >= 1560) mastery = 5;
+    else if (rating >= 1220) mastery = 4;
+    else if (rating >= 880) mastery = 3;
+    else if (rating >= 540) mastery = 2;
 
     return (
         <Link
@@ -156,120 +157,138 @@ function ArchetypeCard({
             style={{
                 padding: 'var(--space-6)',
                 display: 'flex',
-                flexDirection: 'row',
-                gap: '24px',
+                gap: '20px',
                 alignItems: 'stretch',
-                minHeight: '160px',
-                transition: 'all 160ms var(--ease-out-quint)',
+                minHeight: '170px',
+                transition: 'all 200ms ease-out',
                 position: 'relative',
-                overflow: 'hidden'
-            }}
+                textDecoration: 'none',
+                backgroundColor: 'rgba(28, 36, 48, 0.4)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '16px',
+                color: 'inherit',
+                '--accent': accent
+            } as any}
             onClick={() => {
                 const audio = new Audio('/sfx/card_1.mp3');
                 audio.play().catch(e => console.error("Audio playback stalled", e));
             }}
         >
-            {/* Left Column: Mastery Ladder */}
+            {/* 1. Mastery Column */}
             <div style={{
-                width: '16px',
-                background: 'var(--bg-primary)',
-                borderRadius: '8px',
+                width: '12px',
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: '6px',
                 padding: '3px',
                 display: 'flex',
                 flexDirection: 'column-reverse',
-                gap: '3px',
-                border: '1px solid var(--border)',
-                zIndex: 2
+                gap: '4px',
+                border: '1px solid rgba(255,255,255,0.05)',
+                flexShrink: 0
             }}>
-                {[...Array(5)].map((_, i) => (
-                    <div key={i} style={{
+                {[1, 2, 3, 4, 5].map((step) => (
+                    <div key={step} style={{
                         flex: 1,
-                        borderRadius: '4px',
-                        background: i < masterSegs ? accentColor : 'transparent',
-                        boxShadow: i < masterSegs ? `0 0 12px ${accentColor}88` : 'none',
-                        opacity: i < masterSegs ? 1 : 0.05,
+                        borderRadius: '3px',
+                        backgroundColor: step <= mastery ? accent : 'transparent',
+                        boxShadow: step <= mastery ? `0 0 10px ${accent}` : 'none',
+                        opacity: step <= mastery ? 1 : 0.05,
                         transition: 'all 0.4s ease'
                     }} />
                 ))}
             </div>
 
-            {/* Middle: Content */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 2 }}>
-                <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h2 style={{ fontSize: '22px', margin: 0, fontWeight: 800, color: 'var(--text-primary)' }}>{archetype.title}</h2>
-                        <span className="tier-label" style={{
+            {/* 2. Content Column */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
+                <div style={{ pointerEvents: 'none' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                        <h2 style={{ fontSize: '22px', margin: 0, fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2 }}>
+                            {archetype.title}
+                        </h2>
+                        <span style={{
                             fontSize: '9px',
-                            fontWeight: 700,
+                            fontWeight: 800,
                             padding: '4px 8px',
-                            background: `${accentColor}15`,
-                            color: accentColor,
-                            border: `1px solid ${accentColor}33`,
+                            background: 'rgba(255,255,255,0.05)',
+                            color: accent,
+                            border: `1px solid ${accent}33`,
                             borderRadius: '4px',
-                            letterSpacing: '0.05em'
-                        }}>{archetype.tier?.toUpperCase() || "NOVICE"}</span>
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            flexShrink: 0
+                        }}>
+                            {archetype.tier || "NOVICE"}
+                        </span>
                     </div>
                     <p style={{
-                        margin: '8px 0',
+                        margin: '12px 0',
                         fontSize: '14px',
-                        color: 'var(--text-secondary)',
-                        lineHeight: 1.4,
-                        opacity: 0.8
+                        color: 'rgba(255,255,255,0.6)',
+                        lineHeight: 1.5,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
                     }}>
                         {archetype.summary || "Calibrate your precision in this cognitive pattern."}
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
                     <div className="rating-container">
-                        <span className="rating-label">Inertia</span>
-                        <span className="rating-value" style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)' }}>{rating}</span>
+                        <div className="rating-label" style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.5 }}>Inertia</div>
+                        <div className="rating-value" style={{ fontSize: '20px', fontWeight: 900, color: '#FFFFFF' }}>{rating}</div>
                     </div>
                     <div className="rating-container">
-                        <span className="rating-label">Samples</span>
-                        <span className="rating-value" style={{ opacity: 0.6 }}>{archetype.attemptCount}</span>
+                        <div className="rating-label" style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.5 }}>Samples</div>
+                        <div className="rating-value" style={{ fontSize: '18px', fontWeight: 600, opacity: 0.4, color: '#FFFFFF' }}>{archetype.attemptCount}</div>
                     </div>
                 </div>
             </div>
 
-            {/* Right: Action */}
+            {/* 4. Action Column */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                borderLeft: '1px solid var(--border)',
-                paddingLeft: '24px',
-                zIndex: 2
+                paddingLeft: '20px',
+                borderLeft: '1px solid rgba(255,255,255,0.05)',
+                flexShrink: 0
             }}>
-                <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '20px',
-                    background: `${accentColor}22`,
+                <div className="enter-btn-circle" style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '22px',
+                    backgroundColor: `${accent}22`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: accentColor,
-                    fontSize: '20px',
-                    fontWeight: 900,
-                    transition: 'all 160ms ease'
-                }} className="enter-arrow">
-                    →
+                    transition: 'all 200ms ease',
+                    color: accent,
+                    border: `1px solid ${accent}44`
+                }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 200ms ease' }}>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
                 </div>
             </div>
 
             <style jsx>{`
-                .world-card:hover .enter-arrow {
-                    background: ${accentColor};
-                    color: white;
-                    transform: scale(1.1) translateX(4px);
-                    box-shadow: 0 0 20px ${accentColor}66;
+                .world-card:hover {
+                    background: rgba(255,255,255,0.035) !important;
+                    border-color: rgba(255,255,255,0.2) !important;
+                }
+                .world-card:hover .enter-btn-circle {
+                    background-color: ${accent} !important;
+                    color: #FFFFFF !important;
+                    transform: scale(1.1);
+                    box-shadow: 0 0 20px ${accent}88;
+                }
+                .world-card:hover svg {
+                    transform: translateX(2px);
                 }
                 .world-card:active {
-                    transform: scale(0.98);
-                }
-                .world-card:hover {
-                    border-color: ${accentColor}33;
-                    background: linear-gradient(to bottom right, rgba(255,255,255,0.02), transparent);
+                    transform: scale(0.97) !important;
                 }
             `}</style>
         </Link>
