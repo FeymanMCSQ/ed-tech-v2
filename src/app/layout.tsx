@@ -6,7 +6,7 @@ import Navbar from "@/app/components/Navbar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Archetype Learning Engine",
+    title: "Feynman",
     description: "Granular skill calibration platform",
     icons: {
         icon: "/icons/icon-32.png",

@@ -58,6 +58,13 @@ export default function Navbar() {
                         alt="Feynman"
                         style={{ height: '32px', width: 'auto', display: 'block' }}
                     />
+                    <span style={{
+                        fontSize: '20px',
+                        fontWeight: 800,
+                        letterSpacing: '-0.02em',
+                        marginLeft: '12px',
+                        color: 'var(--text-primary)'
+                    }}>Feynman</span>
                 </Link>
 
                 <div className="nav-controls">
