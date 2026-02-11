@@ -107,7 +107,7 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
         const isCorrectResult = selectedChoice === prefetchedAnswer;
 
         // Play feedback sound
-        const audioPath = isCorrectResult ? '/sfx/correct_sound_2.mp3' : '/sfx/wrong_sound.mp3';
+        const audioPath = isCorrectResult ? '/sfx/correct_2.mp3' : '/sfx/wrong_1.mp3';
         const audio = new Audio(audioPath);
         audio.play().catch(e => console.error("Audio playback stalled", e));
 
