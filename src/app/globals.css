@@ -39,9 +39,105 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   min-height: 100vh;
+}
+
+/* Navbar */
+
+.navbar {
+  width: 100%;
+  height: 64px;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+
+.navbar-inner {
+  width: 100%;
+  max-width: 1100px;
+  padding: 0 var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.brand::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  background-color: var(--accent);
+  border-radius: 2px;
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.btn-signout {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btn-signout:hover {
+  border-color: var(--error);
+  color: var(--error);
+  background-color: rgba(255, 93, 93, 0.05);
+}
+
+.btn-login {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--accent);
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 150ms ease;
+}
+
+.btn-login:hover {
+  background-color: var(--accent);
+  color: white;
 }
 
 /* Base UI Components */
@@ -54,6 +150,7 @@ body {
   width: 100%;
   max-width: 400px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  margin-top: 120px;
 }
 
 h1 {
@@ -116,6 +213,24 @@ button:hover {
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+@keyframes pulse-opacity {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.btn-loading {
+  animation: pulse-opacity 1s infinite ease-in-out;
+  pointer-events: none;
+  position: relative;
 }
 
 .error-box {

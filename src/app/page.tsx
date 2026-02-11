@@ -44,10 +44,7 @@ export default function HomePage() {
                     <h1>ARCHETYPE</h1>
                     <p>Strategic path to absolute cognitive precision.</p>
                 </div>
-                <div style={{ textAlign: "right" }}>
-                    <div className="rating-label">Global Standing</div>
-                    <div className="rating-value" style={{ fontSize: "32px", color: "var(--accent)" }}>600</div>
-                </div>
+
             </header>
 
             {enrolled.length > 0 && (

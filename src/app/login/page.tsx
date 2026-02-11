@@ -9,6 +9,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState<{ message: string, code?: string } | null>(null);
     const [success, setSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -16,6 +17,7 @@ export default function LoginPage() {
         setError(null);
         setSuccess(false);
 
+        setIsSubmitting(true);
         try {
             const res = await fetch("/api/auth/login", {
                 method: "POST",
@@ -37,6 +39,8 @@ export default function LoginPage() {
             }
         } catch (err) {
             setError({ message: "An unexpected error occurred", code: "INTERNAL_ERROR" });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -63,6 +67,7 @@ export default function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        disabled={isSubmitting}
                     />
                 </div>
 
@@ -75,10 +80,17 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        disabled={isSubmitting}
                     />
                 </div>
 
-                <button type="submit">Begin Session</button>
+                <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={isSubmitting ? "btn-loading" : ""}
+                >
+                    {isSubmitting ? "Processing..." : "Begin Session"}
+                </button>
             </form>
 
             <div className="link-text">

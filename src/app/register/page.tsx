@@ -10,6 +10,7 @@ export default function RegisterPage() {
     const [displayName, setDisplayName] = useState("");
     const [error, setError] = useState<{ message: string, code?: string } | null>(null);
     const [success, setSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -17,6 +18,7 @@ export default function RegisterPage() {
         setError(null);
         setSuccess(false);
 
+        setIsSubmitting(true);
         try {
             const res = await fetch("/api/auth/register", {
                 method: "POST",
@@ -37,6 +39,8 @@ export default function RegisterPage() {
             }
         } catch (err) {
             setError({ message: "An unexpected error occurred", code: "INTERNAL_ERROR" });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -62,6 +66,7 @@ export default function RegisterPage() {
                         placeholder="John Doe"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
+                        disabled={isSubmitting}
                     />
                 </div>
 
@@ -74,6 +79,7 @@ export default function RegisterPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        disabled={isSubmitting}
                     />
                 </div>
 
@@ -86,10 +92,17 @@ export default function RegisterPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        disabled={isSubmitting}
                     />
                 </div>
 
-                <button type="submit">Initialize Mastery</button>
+                <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={isSubmitting ? "btn-loading" : ""}
+                >
+                    {isSubmitting ? "Initializing..." : "Initialize Mastery"}
+                </button>
             </form>
 
             <div className="link-text">
