@@ -48,6 +48,7 @@ export interface DomainDetail {
     summary: string | null;
     rating?: number;
     isEnrolled: boolean;
+    subjectOrder: number;
     archetypes: ArchetypeView[];
 }
 
@@ -199,6 +200,7 @@ export function formatDomainDetail(
         summary: domain.summary,
         isEnrolled,
         rating: isEnrolled ? maxRating : undefined,
+        subjectOrder: domain.Subject?.order || 1,
         archetypes: archetypes.sort((a, b) => (domain.Archetype.find((oa: any) => oa.id === a.id)?.order || 0) - (domain.Archetype.find((oa: any) => oa.id === b.id)?.order || 0))
     };
 }

@@ -15,6 +15,7 @@ export interface ProblemView {
     rating: number;
     userRating?: number;
     solutions?: string;
+    subjectOrder?: number;
 }
 
 export function formatProblemView(problem: any, userRating?: number): ProblemView {
@@ -50,7 +51,6 @@ export function formatProblemView(problem: any, userRating?: number): ProblemVie
             });
         }
     }
-
     return {
         id: problem.id,
         type: problem.type as ProblemType,
@@ -60,7 +60,8 @@ export function formatProblemView(problem: any, userRating?: number): ProblemVie
         tags: problem.tags,
         rating: problem.rating,
         userRating,
-        solutions: problem.solutions
+        solutions: problem.solutions,
+        subjectOrder: problem.Archetype?.Domain?.Subject?.order || 1
     };
 }
 

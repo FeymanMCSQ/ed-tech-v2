@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { DomainDetail, ArchetypeView } from "@/domain/world";
+import { getDomainAccentColor } from "@/lib/colors";
 
 export default function DomainPage({ params }: { params: Promise<{ slug: string; domainSlug: string }> }) {
     const { slug, domainSlug } = use(params);
@@ -10,8 +11,7 @@ export default function DomainPage({ params }: { params: Promise<{ slug: string;
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Accent logic from Design System
-    const accentColor = slug === 'math' ? '#4F8CFF' : slug === 'physics' ? '#9C6BFF' : slug === 'comedy' ? '#FFB547' : '#3B82F6';
+    const accentColor = domain ? getDomainAccentColor(domain.subjectOrder) : (slug === 'math' ? '#4F8CFF' : slug === 'physics' ? '#9C6BFF' : '#3B82F6');
 
     async function fetchDomainDetail() {
         try {

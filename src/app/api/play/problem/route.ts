@@ -85,7 +85,17 @@ export async function GET(request: Request) {
                 tags: true,
                 rating: true,
                 solutions: true,
-                archetypeId: true
+                Archetype: {
+                    select: {
+                        Domain: {
+                            select: {
+                                Subject: {
+                                    select: { order: true }
+                                }
+                            }
+                        }
+                    }
+                }
             },
             take: 10
         });
@@ -108,7 +118,17 @@ export async function GET(request: Request) {
                     tags: true,
                     rating: true,
                     solutions: true,
-                    archetypeId: true
+                    Archetype: {
+                        select: {
+                            Domain: {
+                                select: {
+                                    Subject: {
+                                        select: { order: true }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             });
 

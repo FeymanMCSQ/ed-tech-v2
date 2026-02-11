@@ -18,7 +18,7 @@ export async function GET(
                     orderBy: { order: 'asc' }
                 },
                 Subject: {
-                    select: { slug: true }
+                    select: { slug: true, order: true }
                 }
             }
         });

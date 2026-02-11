@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { ProblemView, MCQChoice } from "@/domain/problem";
+import { getDomainAccentColor } from "@/lib/colors";
 
 export default function PlayPage({ params }: { params: Promise<{ worldSlug: string; domainSlug: string; archetypeSlug: string }> }) {
     const { worldSlug, domainSlug, archetypeSlug } = use(params);
@@ -14,6 +15,8 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
     const [isVerified, setIsVerified] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [startTime, setStartTime] = useState<number>(0);
+
+    const accentColor = problem?.subjectOrder ? getDomainAccentColor(problem.subjectOrder) : (worldSlug === 'math' ? '#4F8CFF' : worldSlug === 'physics' ? '#9C6BFF' : '#3B82F6');
 
     // Joy States
     const [streak, setStreak] = useState(0);
@@ -208,7 +211,7 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
     const streakHeatClass = streak >= 6 ? "streak-heat-3" : streak >= 4 ? "streak-heat-2" : streak >= 2 ? "streak-heat-1" : "";
 
     return (
-        <div className={`play-container ${streakHeatClass}`}>
+        <div className={`play-container ${streakHeatClass}`} style={{ '--accent': accentColor } as any}>
             <header className="home-header" style={{ borderBottom: 'none', marginBottom: 'var(--space-6)', paddingBottom: 0 }}>
                 <div style={{ width: '100%', display: 'flex', gap: '32px' }}>
                     <div style={{ flex: 1 }}>
