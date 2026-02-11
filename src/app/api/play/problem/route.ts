@@ -58,29 +58,24 @@ export async function GET(request: Request) {
 
         const userRating = userArch.rating;
 
-        // 3. Selection Engine (Simple Calibration)
-        // Find problems for this archetype with rating in [rating - 200, rating + 200]
-        // In a real system, this would be more complex (e.g. tracking seen problems)
-        const problems = await db.problem.findMany({
-        },
-            select: {
-            id: true,
-            type: true,
-            promptLatex: true,
-            choices: true,
-            topic: true,
-            tags: true,
-            rating: true,
-            solutions: true,
-            archetypeId: true
-        },
-            take: 10
+        // 3. Fetch Attempt History (Avoid repeats)
+        const attempts = await db.attempt.findMany({
+            where: { userId },
+            select: { problemId: true }
         });
+        const attemptedIds = attempts.map(a => a.problemId);
 
-    const selectedProblem = problems.length > 0
-        ? problems[Math.floor(Math.random() * problems.length)]
-        : await db.problem.findFirst({
-            where: { archetypeId: archetype.id },
+        // 4. Selection Engine (Simple Calibration)
+        // Find NEW problems for this archetype with rating in [rating - 200, rating + 200]
+        const problems = await db.problem.findMany({
+            where: {
+                archetypeId: archetype.id,
+                rating: {
+                    gte: userRating - 200,
+                    lte: userRating + 200
+                },
+                id: { notIn: attemptedIds }
+            },
             select: {
                 id: true,
                 type: true,
@@ -91,28 +86,51 @@ export async function GET(request: Request) {
                 rating: true,
                 solutions: true,
                 archetypeId: true
-            }
+            },
+            take: 10
         });
 
-    if (!selectedProblem) {
+        // 5. Resolution with Fallback
+        // If no unattempted problems in range, try any unattempted problem in archetype
+        const selectedProblem = problems.length > 0
+            ? problems[Math.floor(Math.random() * problems.length)]
+            : await db.problem.findFirst({
+                where: {
+                    archetypeId: archetype.id,
+                    id: { notIn: attemptedIds }
+                },
+                select: {
+                    id: true,
+                    type: true,
+                    promptLatex: true,
+                    choices: true,
+                    topic: true,
+                    tags: true,
+                    rating: true,
+                    solutions: true,
+                    archetypeId: true
+                }
+            });
+
+        if (!selectedProblem) {
+            return NextResponse.json(
+                { success: false, error: { code: "NO_PROBLEMS", message: "No unattempted problems available for this calibration level" } },
+                { status: 404 }
+            );
+        }
+
+        const formatted = formatProblemView(selectedProblem, userRating);
+
+        return NextResponse.json({
+            success: true,
+            data: formatted
+        });
+
+    } catch (error) {
+        console.error("Problem selection failure:", error);
         return NextResponse.json(
-            { success: false, error: { code: "NO_PROBLEMS", message: "No problems available for this calibration level" } },
-            { status: 404 }
+            { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to fetch calibration problem" } },
+            { status: 500 }
         );
     }
-
-    const formatted = formatProblemView(selectedProblem, userRating);
-
-    return NextResponse.json({
-        success: true,
-        data: formatted
-    });
-
-} catch (error) {
-    console.error("Problem selection failure:", error);
-    return NextResponse.json(
-        { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to fetch calibration problem" } },
-        { status: 500 }
-    );
-}
 }
