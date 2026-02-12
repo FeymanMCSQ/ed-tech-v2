@@ -147,13 +147,30 @@ export default function SubjectsPipelinePage() {
                 <section style={{
                     padding: 'var(--space-4)',
                     borderRadius: '12px',
-                    background: status.type === 'success' ? 'rgba(61, 220, 151, 0.1)' : 'rgba(255, 93, 93, 0.1)',
-                    border: `1px solid ${status.type === 'success' ? 'var(--success)' : 'var(--error)'}`,
-                    color: status.type === 'success' ? 'var(--success)' : 'var(--error)',
+                    background: status.type === 'success'
+                        ? 'rgba(61, 220, 151, 0.1)'
+                        : status.type === 'loading'
+                            ? 'rgba(79, 140, 255, 0.1)'
+                            : 'rgba(255, 93, 93, 0.1)',
+                    border: `1px solid ${status.type === 'success'
+                            ? 'var(--success)'
+                            : status.type === 'loading'
+                                ? 'var(--accent-math)'
+                                : 'var(--error)'
+                        }`,
+                    color: status.type === 'success'
+                        ? 'var(--success)'
+                        : status.type === 'loading'
+                            ? 'var(--accent-math)'
+                            : 'var(--error)',
                     animation: 'fadeIn 200ms ease-out'
                 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        {status.type === 'success' ? '✓ Seeding Successful' : '⚠ Ingestion Blocked'}
+                        {status.type === 'success'
+                            ? '✓ Seeding Successful'
+                            : status.type === 'loading'
+                                ? '⚡ Processing'
+                                : '⚠ Ingestion Blocked'}
                     </h3>
                     <p style={{ fontSize: '14px', fontWeight: 500 }}>{status.message}</p>
 
