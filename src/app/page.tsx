@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { World } from "@/domain/world";
+import { getDomainAccentColor } from "@/lib/colors";
 
 export default function HomePage() {
     const [enrolled, setEnrolled] = useState<World[]>([]);
@@ -81,12 +82,14 @@ function WorldCard({ world }: { world: World }) {
     // Determine active steps for the ladder based on rating
     const rating = world.rating || 0;
     const activeSteps = rating >= 2000 ? 5 : rating >= 1700 ? 4 : rating >= 1400 ? 3 : rating >= 800 ? 2 : rating > 0 ? 1 : 0;
+    const accentColor = getDomainAccentColor(world.order);
 
     return (
         <Link
             href={`/world/${world.slug}`}
             className={`world-card ${world.isEnrolled ? "enrolled" : ""}`}
             data-domain={world.slug}
+            style={{ '--accent': accentColor } as any}
             onClick={() => {
                 const audio = new Audio('/sfx/card_1.mp3');
                 audio.play().catch(e => console.error("Audio playback stalled", e));

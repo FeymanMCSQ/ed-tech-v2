@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { WorldDetail, DomainView } from "@/domain/world";
+import { getDomainAccentColor } from "@/lib/colors";
 
 export default function WorldPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
@@ -76,8 +77,10 @@ export default function WorldPage({ params }: { params: Promise<{ slug: string }
         );
     }
 
+    const accentColor = world ? getDomainAccentColor(world.order) : (slug === 'math' ? '#4F8CFF' : '#3B82F6');
+
     return (
-        <div className="home-container">
+        <div className="home-container" style={{ '--accent': accentColor } as any}>
             <header className="home-header" style={{ marginBottom: "var(--space-12)" }}>
                 <div>
                     <Link href="/" className="rating-label" style={{
@@ -104,6 +107,7 @@ export default function WorldPage({ params }: { params: Promise<{ slug: string }
                             key={domain.id}
                             domain={domain}
                             worldSlug={slug}
+                            accentColor={accentColor}
                             isEnrolling={enrollingId === domain.id}
                             onEnroll={() => handleEnroll(domain.id, domain.slug)}
                         />
@@ -117,11 +121,13 @@ export default function WorldPage({ params }: { params: Promise<{ slug: string }
 function DomainCard({
     domain,
     worldSlug,
+    accentColor,
     isEnrolling,
     onEnroll
 }: {
     domain: DomainView;
     worldSlug: string;
+    accentColor: string;
     isEnrolling: boolean;
     onEnroll: () => void;
 }) {
@@ -131,6 +137,7 @@ function DomainCard({
     return (
         <div
             className={`world-card ${domain.isEnrolled ? "enrolled" : ""}`}
+            style={{ '--accent': accentColor } as any}
             data-domain={worldSlug === 'math' ? 'mathematics' : worldSlug}
         >
             <div className="world-content">

@@ -492,9 +492,9 @@ button:disabled {
 }
 
 .ladder-step.active {
-  background: var(--world-accent, var(--accent));
-  border-color: var(--world-accent, var(--accent));
-  box-shadow: 0 0 12px var(--world-accent, var(--accent));
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
 }
 
 .world-footer {
@@ -536,32 +536,15 @@ button:disabled {
   border: 1px solid var(--border);
 }
 
-/* Domain Accents */
-.world-card[data-domain="mathematics"] {
-  --world-accent: #3B82F6;
-}
-
-.world-card[data-domain="physics"] {
-  --world-accent: #8B5CF6;
-}
-
-.world-card[data-domain="comedy"] {
-  --world-accent: #F59E0B;
-}
-
-.world-card[data-domain="computer-science"] {
-  --world-accent: #10B981;
-}
-
 .world-card h2 {
-  color: var(--world-accent, var(--text-primary));
+  color: var(--accent, var(--text-primary));
 }
 
 .enter-link {
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
-  color: var(--world-accent, var(--accent));
+  color: var(--accent);
   display: flex;
   align-items: center;
   gap: 8px;

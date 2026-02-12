@@ -28,6 +28,7 @@ export interface WorldDetail {
     slug: string;
     title: string;
     summary: string | null;
+    order: number;
     domains: DomainView[];
 }
 
@@ -159,6 +160,7 @@ export function formatWorldDetail(
         slug: subject.slug,
         title: subject.title,
         summary: subject.summary,
+        order: subject.order,
         domains: domains.sort((a, b) => a.order - b.order)
     };
 }
