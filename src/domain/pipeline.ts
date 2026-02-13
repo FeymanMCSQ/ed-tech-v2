@@ -80,3 +80,14 @@ export const ArchetypeIngestionSchema = z.array(ArchetypeSchema)
     });
 
 export type ArchetypeIngestionInput = z.infer<typeof ArchetypeIngestionSchema>;
+
+/**
+ * Schema for a manual rating change.
+ */
+export const RatingChangeSchema = z.object({
+    userId: z.string().min(1, "User ID is required"),
+    archetypeId: z.string().min(1, "Archetype ID is required"),
+    rating: z.number().int().min(200).max(3000),
+});
+
+export type RatingChangeInput = z.infer<typeof RatingChangeSchema>;
