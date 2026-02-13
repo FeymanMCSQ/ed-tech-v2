@@ -6,7 +6,7 @@ export async function GET(request: Request) {
     const type = searchParams.get("type");
     const query = searchParams.get("query") || "";
 
-    if (!type || !["subject", "domain", "archetype"].includes(type)) {
+    if (!type || !["subject", "domain", "archetype", "user"].includes(type)) {
         return NextResponse.json({
             success: false,
             error: {
@@ -52,6 +52,19 @@ export async function GET(request: Request) {
                 select: { id: true, title: true, slug: true },
                 take: 20
             });
+        } else if (type === "user") {
+            const users = await db.user.findMany({
+                where: {
+                    email: {
+                        contains: query,
+                        mode: "insensitive"
+                    }
+                },
+                select: { id: true, email: true },
+                take: 20
+            });
+            // Map email to title for UI consistency
+            results = users.map(u => ({ id: u.id, title: u.email || "No Email" }));
         }
 
         return NextResponse.json({

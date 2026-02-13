@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-type EntityType = "subject" | "domain" | "archetype";
+type EntityType = "subject" | "domain" | "archetype" | "user";
 
 interface LookupResult {
     id: string;
@@ -63,7 +63,7 @@ export default function PipelineLookupPage() {
                     Pipeline Lookup
                 </h1>
                 <p style={{ color: 'var(--text-secondary)' }}>
-                    Find IDs for subjects, domains, and archetypes by title.
+                    Find IDs for subjects, domains, archetypes, and users.
                 </p>
             </header>
 
@@ -98,18 +98,19 @@ export default function PipelineLookupPage() {
                             <option value="subject">Subject</option>
                             <option value="domain">Domain</option>
                             <option value="archetype">Archetype</option>
+                            <option value="user">User (Email)</option>
                         </select>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-                            Search Title
+                            Search Title / Email
                         </label>
                         <input
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder={`Search for a ${type}...`}
+                            placeholder={type === 'user' ? "Search for a user email..." : `Search for a ${type}...`}
                             style={{
                                 background: '#0a0e14',
                                 border: '1px solid var(--border)',

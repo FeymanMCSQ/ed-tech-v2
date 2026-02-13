@@ -181,21 +181,55 @@ export default function RatingChangePage() {
                 <section style={{
                     padding: 'var(--space-4)',
                     borderRadius: '12px',
-                    background: status.type === 'success' ? 'rgba(61, 220, 151, 0.1)' : 'rgba(255, 93, 93, 0.1)',
-                    border: `1px solid ${status.type === 'success' ? 'var(--success)' : 'var(--error)'}`,
-                    color: status.type === 'success' ? 'var(--success)' : 'var(--error)'
+                    background: status.type === 'success'
+                        ? 'rgba(61, 220, 151, 0.1)'
+                        : status.type === 'loading'
+                            ? 'rgba(79, 140, 255, 0.1)'
+                            : 'rgba(255, 93, 93, 0.1)',
+                    border: `1px solid ${status.type === 'success'
+                            ? 'var(--success)'
+                            : status.type === 'loading'
+                                ? 'var(--accent-math)'
+                                : 'var(--error)'
+                        }`,
+                    color: status.type === 'success'
+                        ? 'var(--success)'
+                        : status.type === 'loading'
+                            ? 'var(--accent-math)'
+                            : 'var(--error)',
+                    animation: 'fadeIn 200ms ease-out'
                 }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase' }}>
-                        {status.type === 'success' ? '✓ Success' : '⚠ Blocked'}
+                    <h3 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {status.type === 'success'
+                            ? '✓ Update Successful'
+                            : status.type === 'loading'
+                                ? '⚡ Processing'
+                                : '⚠ Update Blocked'}
                     </h3>
-                    <p style={{ fontSize: '13px' }}>{status.message}</p>
+                    <p style={{ fontSize: '13px', fontWeight: 500 }}>{status.message}</p>
                     {status.details && (
-                        <pre style={{ fontSize: '11px', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '4px', marginTop: '8px' }}>
-                            {JSON.stringify(status.details, null, 2)}
-                        </pre>
+                        <div style={{ marginTop: 'var(--space-4)' }}>
+                            <p style={{ fontSize: '11px', textTransform: 'uppercase', opacity: 0.6, marginBottom: '4px' }}>Technical Details</p>
+                            <pre style={{
+                                fontSize: '11px',
+                                background: 'rgba(0,0,0,0.2)',
+                                padding: 'var(--space-4)',
+                                borderRadius: '8px',
+                                overflowX: 'auto'
+                            }}>
+                                {JSON.stringify(status.details, null, 2)}
+                            </pre>
+                        </div>
                     )}
                 </section>
             )}
+
+            <style jsx global>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(8px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
         </main>
     );
 }
