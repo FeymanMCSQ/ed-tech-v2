@@ -65,7 +65,7 @@ export default function ArchetypePipelinePage() {
 
     return (
         <main style={{
-            padding: 'var(--space-12) var(--space-6)',
+            padding: '80px var(--space-6) var(--space-12)',
             maxWidth: '900px',
             width: '100%',
             display: 'flex',
@@ -186,10 +186,10 @@ export default function ArchetypePipelinePage() {
                             ? 'rgba(79, 140, 255, 0.1)'
                             : 'rgba(255, 93, 93, 0.1)',
                     border: `1px solid ${status.type === 'success'
-                            ? 'var(--success)'
-                            : status.type === 'loading'
-                                ? 'var(--accent-math)'
-                                : 'var(--error)'
+                        ? 'var(--success)'
+                        : status.type === 'loading'
+                            ? 'var(--accent-math)'
+                            : 'var(--error)'
                         }`,
                     color: status.type === 'success'
                         ? 'var(--success)'
