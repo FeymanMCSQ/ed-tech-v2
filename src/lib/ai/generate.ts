@@ -46,7 +46,7 @@ export async function generateContent(args: {
                 { role: 'user', content: prompt },
             ],
             response_format: { type: 'json_object' },
-            seed: 42, // For deterministic-ish results
+            seed: Math.floor(Math.random() * 1000000), // Random seed for variety
             temperature: 0.1, // Low temperature for consistency
         }),
     });
