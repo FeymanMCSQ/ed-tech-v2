@@ -1,11 +1,14 @@
 :root {
   /* Base Colors - Warm Dark Mode */
   --bg-primary: #0F141B;
-  --bg-secondary: #151C25;
+  --bg-secondary: #0F1724;
   --surface: #1C2430;
   --border: rgba(255, 255, 255, 0.08);
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 80px;
+  --sidebar-transition: 400ms var(--ease-out-quint);
 
-  /* Text Colors */
+  /* Spacing System */
   --text-primary: #E6EDF3;
   --text-secondary: #9AA4B2;
   --text-muted: #6B7280;
