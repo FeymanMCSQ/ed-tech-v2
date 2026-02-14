@@ -20,9 +20,11 @@ interface ApiResponse {
 
 export default function GenerateProblemsPage() {
     const [archetypeId, setArchetypeId] = useState('');
-    const [band, setBand] = useState('400_600');
+    const [band, setBand] = useState('200_300');
     const [count, setCount] = useState(5);
     const [type, setType] = useState('MCQ');
+    const [model, setModel] = useState('x-ai/grok-4.1-fast');
+    const [useReasoning, setUseReasoning] = useState(false);
 
     const [status, setStatus] = useState<StatusStage>('idle');
     const [response, setResponse] = useState<ApiResponse | null>(null);
@@ -33,34 +35,29 @@ export default function GenerateProblemsPage() {
         e.preventDefault();
         if (!archetypeId || status !== 'idle') return;
 
-        setStatus('anticipation');
+        setStatus('processing');
         setResponse(null);
 
-        setTimeout(async () => {
-            setStatus('processing');
-            try {
-                const res = await fetch('/api/pipeline/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ archetypeId, band, count, type }),
-                });
+        try {
+            const res = await fetch('/api/pipeline/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ archetypeId, band, count, type, model, useReasoning }),
+            });
 
-                const data = await res.json();
+            const data = await res.json();
 
-                setTimeout(() => {
-                    if (res.ok) {
-                        setResponse(data);
-                        setStatus('success');
-                    } else {
-                        setResponse(data);
-                        setStatus('error');
-                    }
-                }, 300);
-            } catch (err: any) {
-                setResponse({ success: false, error: err.message || 'Network error', stage: 'client' });
+            if (res.ok) {
+                setResponse(data);
+                setStatus('success');
+            } else {
+                setResponse(data);
                 setStatus('error');
             }
-        }, 180); // Design System Suspense Delay
+        } catch (err: any) {
+            setResponse({ success: false, error: err.message || 'Network error', stage: 'client' });
+            setStatus('error');
+        }
     };
 
     return (
@@ -173,6 +170,63 @@ export default function GenerateProblemsPage() {
                                 </select>
                                 <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, pointerEvents: 'none' }} />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Model & Reasoning */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-4)', alignItems: 'end' }}>
+                        <div className="input-container">
+                            <label>Inference Model</label>
+                            <div style={{ position: 'relative' }}>
+                                <select
+                                    value={model}
+                                    onChange={(e) => setModel(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: 'var(--bg-primary)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '8px',
+                                        padding: '12px 14px',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '14px',
+                                        appearance: 'none',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    <option value="x-ai/grok-4.1-fast">Grok 4.1 (Fast)</option>
+                                    <option value="xiaomi/mimo-v2-flash">Xiaomi Mimo V2 Flash</option>
+                                </select>
+                                <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, pointerEvents: 'none' }} />
+                            </div>
+                        </div>
+
+                        <div className="input-container">
+                            <label>Neural Reasoning</label>
+                            <button
+                                type="button"
+                                onClick={() => setUseReasoning(!useReasoning)}
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    padding: '12px 14px',
+                                    borderRadius: '8px',
+                                    border: `1px solid ${useReasoning ? 'var(--accent)' : 'var(--border)'}`,
+                                    background: useReasoning ? 'rgba(56, 189, 248, 0.08)' : 'var(--bg-primary)',
+                                    color: useReasoning ? 'var(--accent)' : 'var(--text-secondary)',
+                                    fontSize: '12px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s var(--ease-out-quint)',
+                                    letterSpacing: '0.05em',
+                                    boxShadow: useReasoning ? '0 0 20px rgba(56, 189, 248, 0.1)' : 'none',
+                                }}
+                            >
+                                <Sparkles size={14} style={{ opacity: useReasoning ? 1 : 0.4 }} />
+                                {useReasoning ? 'ACTIVE' : 'READY'}
+                            </button>
                         </div>
                     </div>
 

@@ -12,6 +12,8 @@ const bodySchema = z.object({
     type: z.enum(['MCQ', 'NUMERIC', 'EXPRESSION', 'OPEN']).default('MCQ'),
     band: z.string().min(1), // e.g., "400_600"
     count: z.number().int().min(1).max(20).default(5),
+    model: z.string().optional(),
+    useReasoning: z.boolean().default(false),
 });
 
 export async function POST(req: NextRequest) {
@@ -20,13 +22,14 @@ export async function POST(req: NextRequest) {
         const result = bodySchema.safeParse(body);
 
         if (!result.success) {
+            console.warn('[Pipeline/Generate] Validation failed:', result.error.issues);
             return NextResponse.json(
                 { error: 'Invalid request body', issues: result.error.issues },
                 { status: 400 }
             );
         }
 
-        const { archetypeId, type, band, count } = result.data;
+        const { archetypeId, type, band, count, model, useReasoning } = result.data;
 
         const maxAttempts = 2;
         let attempt = 0;
@@ -39,7 +42,11 @@ export async function POST(req: NextRequest) {
                 const prompt = await buildPrompt({ archetypeId, type, band, count });
 
                 // 2. Generate Content
-                const { content, usage } = await generateContent({ prompt });
+                const { content, usage } = await generateContent({
+                    prompt,
+                    model,
+                    includeReasoning: useReasoning
+                });
 
                 // 3. Validate
                 const batch = parseAndValidateAiBatch(content);
@@ -58,7 +65,7 @@ export async function POST(req: NextRequest) {
 
                 // Only retry on JSON parse errors
                 if (err instanceof AiBatchError && err.stage === 'json_parse' && attempt < maxAttempts) {
-                    console.warn(`[Pipeline] JSON parse failed on attempt ${attempt}. Retrying...`);
+                    console.warn(`[Pipeline/Generate] JSON parse failed on attempt ${attempt}. Retrying...`);
                     continue;
                 }
 

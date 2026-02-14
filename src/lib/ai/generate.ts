@@ -17,6 +17,7 @@ export async function generateContent(args: {
     prompt: string;
     systemPrompt?: string;
     model?: string;
+    includeReasoning?: boolean;
 }): Promise<GenerationResult> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     const defaultModel = process.env.OPENROUTER_MODEL || 'x-ai/grok-4.1-fast';
@@ -29,7 +30,23 @@ export async function generateContent(args: {
         prompt,
         systemPrompt = 'You are an assistant that strictly follows instructions and responds concisely. You are a backend data generator.',
         model = defaultModel,
+        includeReasoning = false,
     } = args;
+
+    const body: any = {
+        model,
+        messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt },
+        ],
+        response_format: { type: 'json_object' },
+        seed: Math.floor(Math.random() * 1000000), // Random seed for variety
+        temperature: 0.1, // Low temperature for consistency
+    };
+
+    if (includeReasoning) {
+        body.include_reasoning = true;
+    }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -39,16 +56,7 @@ export async function generateContent(args: {
             'X-Title': 'Feynman Pipeline',
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            model,
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: prompt },
-            ],
-            response_format: { type: 'json_object' },
-            seed: Math.floor(Math.random() * 1000000), // Random seed for variety
-            temperature: 0.1, // Low temperature for consistency
-        }),
+        body: JSON.stringify(body),
     });
 
     if (!response.ok) {
