@@ -19,7 +19,7 @@ export async function generateContent(args: {
     model?: string;
 }): Promise<GenerationResult> {
     const apiKey = process.env.OPENROUTER_API_KEY;
-    const defaultModel = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
+    const defaultModel = process.env.OPENROUTER_MODEL || 'x-ai/grok-4.1-fast';
 
     if (!apiKey) {
         throw new Error('generateContent: OPENROUTER_API_KEY is not set');
