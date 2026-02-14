@@ -28,6 +28,9 @@ export default function GenerateProblemsPage() {
 
     const [status, setStatus] = useState<StatusStage>('idle');
     const [response, setResponse] = useState<ApiResponse | null>(null);
+    const [batchCount, setBatchCount] = useState(1);
+    const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
+    const [batchStats, setBatchStats] = useState({ success: 0, failure: 0, totalTokens: 0 });
 
     const bands = Object.keys(BAND_DESCRIPTIONS);
 
@@ -37,26 +40,68 @@ export default function GenerateProblemsPage() {
 
         setStatus('processing');
         setResponse(null);
+        setBatchStats({ success: 0, failure: 0, totalTokens: 0 });
 
-        try {
-            const res = await fetch('/api/pipeline/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ archetypeId, band, count, type, model, useReasoning }),
-            });
+        let aggregatedTokens = 0;
+        let successCount = 0;
+        let failureCount = 0;
 
-            const data = await res.json();
+        for (let i = 0; i < batchCount; i++) {
+            setCurrentBatchIndex(i + 1);
+            let attempt = 0;
+            const maxRetries = 2;
+            let success = false;
 
-            if (res.ok) {
-                setResponse(data);
-                setStatus('success');
-            } else {
-                setResponse(data);
-                setStatus('error');
+            while (attempt <= maxRetries && !success) {
+                try {
+                    const res = await fetch('/api/pipeline/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ archetypeId, band, count, type, model, useReasoning }),
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        successCount++;
+                        aggregatedTokens += data.usage?.total_tokens || 0;
+                        setBatchStats({ success: successCount, failure: failureCount, totalTokens: aggregatedTokens });
+
+                        // For single batch, keep detailed response
+                        if (batchCount === 1) {
+                            setResponse(data);
+                        }
+                        success = true;
+                    } else {
+                        if (attempt === maxRetries) {
+                            failureCount++;
+                            setBatchStats(prev => ({ ...prev, failure: failureCount }));
+                        }
+                        attempt++;
+                    }
+                } catch (err: any) {
+                    if (attempt === maxRetries) {
+                        failureCount++;
+                        setBatchStats(prev => ({ ...prev, failure: failureCount }));
+                    }
+                    attempt++;
+                }
             }
-        } catch (err: any) {
-            setResponse({ success: false, error: err.message || 'Network error', stage: 'client' });
+        }
+
+        if (successCount > 0) {
+            setStatus('success');
+            // Mock a final response for the single-batch UI if we did a bulk run
+            if (batchCount > 1) {
+                setResponse({
+                    success: true,
+                    insertedCount: successCount * count,
+                    usage: { total_tokens: aggregatedTokens }
+                });
+            }
+        } else {
             setStatus('error');
+            setResponse({ success: false, error: 'All synthesis cycles failed.', stage: 'bulk_harvest' });
         }
     };
 
@@ -230,26 +275,49 @@ export default function GenerateProblemsPage() {
                         </div>
                     </div>
 
-                    {/* Quantity */}
-                    <div className="input-container">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label>Harvest Quantity</label>
-                            <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 800 }}>{count} items</span>
+                    {/* Quantity & Cycles */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                        <div className="input-container">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label>Harvest Quantity</label>
+                                <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 800 }}>{count} items</span>
+                            </div>
+                            <input
+                                type="range"
+                                min={1}
+                                max={20}
+                                value={count}
+                                onChange={(e) => setCount(Number(e.target.value))}
+                                style={{
+                                    padding: '4px 0',
+                                    border: 'none',
+                                    background: 'transparent',
+                                    accentColor: 'var(--accent)',
+                                    cursor: 'pointer',
+                                }}
+                            />
                         </div>
-                        <input
-                            type="range"
-                            min={1}
-                            max={20}
-                            value={count}
-                            onChange={(e) => setCount(Number(e.target.value))}
-                            style={{
-                                padding: '4px 0',
-                                border: 'none',
-                                background: 'transparent',
-                                accentColor: 'var(--accent)',
-                                cursor: 'pointer',
-                            }}
-                        />
+
+                        <div className="input-container">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label>Harvest Cycles</label>
+                                <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 800 }}>{batchCount}x</span>
+                            </div>
+                            <input
+                                type="range"
+                                min={1}
+                                max={10}
+                                value={batchCount}
+                                onChange={(e) => setBatchCount(Number(e.target.value))}
+                                style={{
+                                    padding: '4px 0',
+                                    border: 'none',
+                                    background: 'transparent',
+                                    accentColor: 'var(--accent)',
+                                    cursor: 'pointer',
+                                }}
+                            />
+                        </div>
                     </div>
 
                     {/* Action Button */}
@@ -284,10 +352,25 @@ export default function GenerateProblemsPage() {
                         animation: 'fadeIn 0.4s ease-out',
                     }}>
                         {status === 'processing' && (
-                            <div style={{ textAlign: 'center', padding: 'var(--space-4) 0' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', textAlign: 'center' }}>
+                                <div style={{
+                                    fontSize: '11px',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.2em',
+                                    color: 'var(--accent)',
+                                    fontWeight: 900
+                                }}>
+                                    {batchCount > 1 ? `Sequential Sync: Cycle ${currentBatchIndex} of ${batchCount}` : 'Standard Processing'}
+                                </div>
                                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
                                     Constructing cognitive seeds from high-dimensional vectors...
                                 </div>
+                                {batchCount > 1 && (
+                                    <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-4)', fontSize: '10px', color: 'var(--text-muted)' }}>
+                                        <span>SUCCEEDED: {batchStats.success}</span>
+                                        <span>FAILED: {batchStats.failure}</span>
+                                    </div>
+                                )}
                             </div>
                         )}
 
