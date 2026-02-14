@@ -339,15 +339,34 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
                     })}
                 </div>
 
-                <div className="play-footer">
+                <div className="play-footer" style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'flex-end' }}>
                     {!isVerified ? (
-                        <button
-                            onClick={handleSubmit}
-                            className={`btn-submit ${isPulsing ? 'suspense' : ''}`}
-                            disabled={!selectedChoice || isSubmitting}
-                        >
-                            {isPulsing ? "CALIBRATING..." : isSubmitting ? "PROCESSING..." : "Verify Calibration"}
-                        </button>
+                        <>
+                            <button
+                                onClick={fetchProblem}
+                                className="btn-submit"
+                                style={{
+                                    background: 'rgba(255,255,255,0.03)',
+                                    border: '1px solid var(--border)',
+                                    color: 'var(--text-muted)',
+                                    paddingLeft: 'var(--space-8)',
+                                    paddingRight: 'var(--space-8)',
+                                    flex: '0 1 auto',
+                                    fontSize: '14px'
+                                }}
+                                disabled={isSubmitting || isPulsing}
+                            >
+                                Next Problem
+                            </button>
+                            <button
+                                onClick={handleSubmit}
+                                className={`btn-submit ${isPulsing ? 'suspense' : ''}`}
+                                disabled={!selectedChoice || isSubmitting}
+                                style={{ flex: 1, maxWidth: '300px' }}
+                            >
+                                {isPulsing ? "CALIBRATING..." : isSubmitting ? "PROCESSING..." : "Verify Calibration"}
+                            </button>
+                        </>
                     ) : (
                         <button
                             onClick={fetchProblem}
