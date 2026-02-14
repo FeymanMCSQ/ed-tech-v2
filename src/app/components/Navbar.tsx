@@ -67,11 +67,26 @@ export default function Navbar() {
                     }}>Feynman</span>
                 </Link>
 
+
+
                 <div className="nav-controls">
                     {!loading && (
                         user ? (
                             <div className="user-info">
                                 <span className="user-name">{user.displayName || user.email}</span>
+                                <Link href="/pipeline" style={{
+                                    textDecoration: 'none',
+                                    color: 'var(--text-secondary)',
+                                    fontSize: '13px',
+                                    fontWeight: 700,
+                                    padding: 'var(--space-1) var(--space-3)',
+                                    borderRadius: '6px',
+                                    backgroundColor: 'rgba(255,255,255,0.03)',
+                                    border: '1px solid var(--border)',
+                                    transition: 'all 200ms ease'
+                                }} className="nav-link-hover">
+                                    Pipeline
+                                </Link>
                                 <button
                                     onClick={handleSignOut}
                                     className={`btn-signout ${isSigningOut ? "btn-loading" : ""}`}
@@ -88,6 +103,11 @@ export default function Navbar() {
                     )}
                 </div>
             </div>
+            <style jsx>{`
+                .nav-link-hover:hover {
+                    color: white !important;
+                }
+            `}</style>
         </nav>
     );
 }
