@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { DomainDetail, ArchetypeView } from "@/domain/world";
 import { getDomainAccentColor } from "@/lib/colors";
+import { Copy, Check } from "lucide-react";
 
 export default function DomainPage({ params }: { params: Promise<{ slug: string; domainSlug: string }> }) {
     const { slug, domainSlug } = use(params);
@@ -246,6 +247,9 @@ function ArchetypeCard({
                 </div>
             </div>
 
+            {/* 3. Copy Button (Absolute Top Right) */}
+            <CopyButton text={`${archetype.title}: ${archetype.summary || "Calibrate your precision in this cognitive pattern."}`} />
+
             {/* 4. Action Column */}
             <div style={{
                 display: 'flex',
@@ -292,5 +296,52 @@ function ArchetypeCard({
                 }
             `}</style>
         </Link>
+    );
+}
+
+function CopyButton({ text }: { text: string }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                zIndex: 10,
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '8px',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 200ms ease',
+                color: copied ? '#10b981' : 'rgba(255,255,255,0.4)',
+                opacity: copied ? 1 : 0.6
+            }}
+            className="copy-btn"
+            title="Copy archetype details"
+        >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            <style jsx>{`
+                .copy-btn:hover {
+                    background: rgba(255,255,255,0.08);
+                    color: white;
+                    opacity: 1;
+                }
+            `}</style>
+        </button>
     );
 }
