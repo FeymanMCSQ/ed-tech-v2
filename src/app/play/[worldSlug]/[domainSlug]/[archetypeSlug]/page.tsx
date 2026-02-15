@@ -186,6 +186,51 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
         }
     };
 
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Avoid shortcuts if user is typing in an input (if any existed, currently none but good practice)
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+            // 1. Choice Mappings (WASD -> A, B, C, D)
+            if (!isVerified && !isSubmitting && !isPulsing) {
+                const keyMap: Record<string, string> = {
+                    'w': 'A', 'W': 'A',
+                    'a': 'B', 'A': 'B',
+                    's': 'C', 'S': 'C',
+                    'd': 'D', 'D': 'D',
+                };
+
+                const choiceId = keyMap[e.key];
+                if (choiceId) {
+                    setSelectedChoice(choiceId);
+                    const audio = new Audio('/sfx/select_1.mp3');
+                    audio.play().catch(e => console.error("Selection audio stalled", e));
+                    return;
+                }
+            }
+
+            // 2. Submit (Enter)
+            if (e.key === 'Enter') {
+                if (!isVerified && selectedChoice && !isSubmitting && !isPulsing) {
+                    handleSubmit();
+                } else if (isVerified) {
+                    fetchProblem();
+                }
+            }
+
+            // 3. Next Problem / Skip (Right Arrow)
+            if (e.key === 'ArrowRight') {
+                if (isVerified || (!isVerified && !isSubmitting && !isPulsing)) {
+                    fetchProblem();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isVerified, selectedChoice, isSubmitting, isPulsing, problem]);
+
     if (loading) {
         return (
             <div className="home-container" style={{ textAlign: "center", justifyContent: "center", minHeight: "60vh" }}>
