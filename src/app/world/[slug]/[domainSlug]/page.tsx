@@ -247,8 +247,20 @@ function ArchetypeCard({
                 </div>
             </div>
 
-            {/* 3. Copy Button (Absolute Top Right) */}
-            <CopyButton text={`${archetype.title}: ${archetype.summary || "Calibrate your precision in this cognitive pattern."}`} />
+            {/* 3. Copy Interaction Group (Vertically Stacked) */}
+            <CopyButton
+                text={archetype.id}
+                title="Copy Archetype ID"
+                topOffset={12}
+                rightOffset={12}
+                activeColor="#60a5fa"
+            />
+            <CopyButton
+                text={`${archetype.title}: ${archetype.summary || "Calibrate your precision in this cognitive pattern."}`}
+                title="Copy Archetype Details"
+                topOffset={48}
+                rightOffset={12}
+            />
 
             {/* 4. Action Column */}
             <div style={{
@@ -299,7 +311,19 @@ function ArchetypeCard({
     );
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({
+    text,
+    title,
+    topOffset = 12,
+    rightOffset = 12,
+    activeColor = '#10b981'
+}: {
+    text: string;
+    title: string;
+    topOffset?: number;
+    rightOffset?: number;
+    activeColor?: string;
+}) {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = (e: React.MouseEvent) => {
@@ -315,8 +339,8 @@ function CopyButton({ text }: { text: string }) {
             onClick={handleCopy}
             style={{
                 position: 'absolute',
-                top: '12px',
-                right: '12px',
+                top: `${topOffset}px`,
+                right: `${rightOffset}px`,
                 zIndex: 10,
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid rgba(255,255,255,0.08)',
@@ -328,11 +352,11 @@ function CopyButton({ text }: { text: string }) {
                 justifyContent: 'center',
                 cursor: 'pointer',
                 transition: 'all 200ms ease',
-                color: copied ? '#10b981' : 'rgba(255,255,255,0.4)',
+                color: copied ? activeColor : 'rgba(255,255,255,0.4)',
                 opacity: copied ? 1 : 0.6
             }}
             className="copy-btn"
-            title="Copy archetype details"
+            title={title}
         >
             {copied ? <Check size={14} /> : <Copy size={14} />}
             <style jsx>{`
