@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import db from "@/data/db";
 import { formatProblemView } from "@/domain/problem";
+import { randomUUID } from "node:crypto";
 
 export async function GET(request: Request) {
     try {
@@ -49,14 +50,25 @@ export async function GET(request: Request) {
             select: { rating: true }
         });
 
-        if (!userArch) {
-            return NextResponse.json(
-                { success: false, error: { code: "FORBIDDEN", message: "You must initialize this domain before calibration" } },
-                { status: 403 }
-            );
-        }
+        let userRating = 200; // Default if not found
 
-        const userRating = userArch.rating;
+        if (!userArch) {
+            // Auto-initialize for authenticated users if they are missing the record
+            // This happens when new archetypes are added to a domain after enrollment
+            const newArch = await db.userArchetype.create({
+                data: {
+                    id: randomUUID(),
+                    userId,
+                    archetypeId: archetype.id,
+                    rating: 200,
+                    updatedAt: new Date()
+                },
+                select: { rating: true }
+            });
+            userRating = newArch.rating;
+        } else {
+            userRating = userArch.rating;
+        }
 
         // 3. Fetch Attempt History (Avoid repeats)
         const attempts = await db.attempt.findMany({
