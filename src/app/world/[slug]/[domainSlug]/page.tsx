@@ -441,7 +441,7 @@ function LevelNavigator({ levels, accentColor }: { levels: ArchetypeView[][], ac
     return (
         <div className="level-nav" style={{
             position: 'sticky',
-            top: '20px',
+            top: '80px',
             zIndex: 100,
             background: 'rgba(15, 23, 42, 0.8)',
             backdropFilter: 'blur(12px)',
