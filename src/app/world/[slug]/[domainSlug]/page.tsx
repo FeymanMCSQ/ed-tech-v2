@@ -4,7 +4,14 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { DomainDetail, ArchetypeView } from "@/domain/world";
 import { getDomainAccentColor } from "@/lib/colors";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Lock, Unlock, CheckCircle } from "lucide-react";
+
+// Helper to chunk the array
+function chunk<T>(array: T[], size: number): T[][] {
+    return Array.from({ length: Math.ceil(array.length / size) }, (v, i) =>
+        array.slice(i * size, i * size + size)
+    );
+}
 
 export default function DomainPage({ params }: { params: Promise<{ slug: string; domainSlug: string }> }) {
     const { slug, domainSlug } = use(params);
@@ -101,27 +108,79 @@ export default function DomainPage({ params }: { params: Promise<{ slug: string;
                 </div>
             </header>
 
+            <LevelNavigator levels={chunk(domain.archetypes, 6)} accentColor={accentColor} />
+
             <section style={{ width: '100%' }}>
-                <div className="section-title" style={{
-                    borderLeft: `4px solid ${accentColor}`,
-                    paddingLeft: '16px',
-                    fontSize: '14px',
-                    letterSpacing: '1px',
-                    marginBottom: 'var(--space-8)'
-                }}>
-                    AVAILABLE ARCHETYPES / COGNITIVE PATTERNS
-                </div>
-                <div className="world-grid">
-                    {domain.archetypes.map(archetype => (
-                        <ArchetypeCard
-                            key={archetype.id}
-                            archetype={archetype}
-                            worldSlug={slug}
-                            domainSlug={domainSlug}
-                            accentColor={accentColor}
-                        />
-                    ))}
-                </div>
+                {chunk(domain.archetypes, 6).map((levelArchetypes, index) => {
+                    const levelNum = index + 1;
+                    const attemptedCount = levelArchetypes.filter(a => a.attemptCount > 0).length;
+                    const isComplete = attemptedCount === levelArchetypes.length;
+                    const isBlank = attemptedCount === 0;
+
+                    const statusLabel = isComplete ? "COMPLETED" : isBlank ? "LOCKED" : "ONGOING";
+                    const statusColor = isComplete ? "var(--success)" : isBlank ? "var(--text-muted)" : accentColor;
+                    const statusIcon = isComplete ? <CheckCircle size={14} /> : isBlank ? <Lock size={14} /> : <div style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${accentColor}`, borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />;
+
+                    return (
+                        <div id={`level-${levelNum}`} key={levelNum} className="level-section" style={{ marginBottom: '48px', opacity: isBlank ? 0.8 : 1, transition: 'opacity 0.3s ease', scrollMarginTop: '100px' }}>
+                            <div className="level-header" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                borderBottom: `1px solid rgba(255,255,255,0.05)`,
+                                paddingBottom: '12px',
+                                marginBottom: '24px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <h2 style={{
+                                        fontSize: '18px',
+                                        fontWeight: 800,
+                                        margin: 0,
+                                        color: isBlank ? 'var(--text-muted)' : 'var(--text-primary)',
+                                        letterSpacing: '0.05em'
+                                    }}>
+                                        LEVEL {levelNum}
+                                    </h2>
+                                    <div style={{
+                                        fontSize: '10px',
+                                        fontWeight: 800,
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        background: isComplete ? 'rgba(16, 185, 129, 0.1)' : isBlank ? 'rgba(255,255,255,0.05)' : `${accentColor}22`,
+                                        color: statusColor,
+                                        border: `1px solid ${statusColor}44`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}>
+                                        {statusIcon}
+                                        {statusLabel}
+                                    </div>
+                                </div>
+                                <span style={{
+                                    fontSize: '12px',
+                                    color: 'var(--text-secondary)',
+                                    fontFamily: 'monospace',
+                                    opacity: 0.7
+                                }}>
+                                    {attemptedCount} / {levelArchetypes.length} PROTOCOLS
+                                </span>
+                            </div>
+
+                            <div className="world-grid">
+                                {levelArchetypes.map(archetype => (
+                                    <ArchetypeCard
+                                        key={archetype.id}
+                                        archetype={archetype}
+                                        worldSlug={slug}
+                                        domainSlug={domainSlug}
+                                        accentColor={accentColor}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })}
             </section>
         </div>
     );
@@ -367,5 +426,82 @@ function CopyButton({
                 }
             `}</style>
         </button>
+    );
+}
+
+function LevelNavigator({ levels, accentColor }: { levels: ArchetypeView[][], accentColor: string }) {
+    // Find the first level that is NOT complete (or the last one if all are complete)
+    // "Complete" means all archetypes have > 0 attempts.
+    let currentLevelIndex = levels.findIndex(level => level.some(a => a.attemptCount === 0));
+    if (currentLevelIndex === -1 && levels.length > 0) currentLevelIndex = levels.length - 1;
+    if (currentLevelIndex === -1) currentLevelIndex = 0;
+
+    const completedLevelsCount = levels.filter(level => level.every(a => a.attemptCount > 0)).length;
+
+    return (
+        <div className="level-nav" style={{
+            position: 'sticky',
+            top: '20px',
+            zIndex: 100,
+            background: 'rgba(15, 23, 42, 0.8)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            padding: '12px 24px',
+            marginBottom: '48px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '24px',
+            width: 'fit-content',
+            maxWidth: '100%',
+            margin: '0 auto 48px auto' // Centered
+        }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 800, opacity: 0.5, letterSpacing: '0.1em' }}>CURRENT LEVEL</div>
+                <div style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)' }}>{currentLevelIndex + 1} <span style={{ opacity: 0.3, fontSize: '14px' }}>/ {levels.length}</span></div>
+            </div>
+
+            <div style={{ height: '32px', width: '1px', background: 'rgba(255,255,255,0.1)' }} />
+
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', flex: 1, minWidth: 0, justifyContent: 'center' }}>
+                {levels.map((level, idx) => {
+                    const isComplete = level.every(a => a.attemptCount > 0);
+                    const isCurrent = idx === currentLevelIndex;
+                    const isLocked = !isComplete && !isCurrent && idx > currentLevelIndex;
+
+                    return (
+                        <button
+                            key={idx}
+                            onClick={() => {
+                                document.getElementById(`level-${idx + 1}`)?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="nav-segment"
+                            style={{
+                                width: '36px',
+                                height: '8px',
+                                borderRadius: '4px',
+                                background: isComplete ? 'var(--success)' : isCurrent ? accentColor : 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                opacity: isLocked ? 0.3 : 1,
+                                position: 'relative',
+                                boxShadow: isCurrent ? `0 0 10px ${accentColor}66` : 'none',
+                                transform: isCurrent ? 'scaleY(1.5)' : 'none'
+                            }}
+                            title={`Level ${idx + 1}: ${isComplete ? 'Completed' : isCurrent ? 'Current' : 'Locked'}`}
+                        />
+                    );
+                })}
+            </div>
+
+            <style jsx>{`
+                .nav-segment:hover {
+                    opacity: 1 !important;
+                    transform: scaleY(1.5) !important;
+                }
+            `}</style>
+        </div>
     );
 }
