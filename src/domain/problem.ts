@@ -14,11 +14,12 @@ export interface ProblemView {
     tags: string[];
     rating: number;
     userRating?: number;
+    attemptCount?: number;
     solutions?: string;
     subjectOrder?: number;
 }
 
-export function formatProblemView(problem: any, userRating?: number): ProblemView {
+export function formatProblemView(problem: any, userRating?: number, attemptCount?: number): ProblemView {
     let choices: MCQChoice[] = [];
 
     if (problem.type === "MCQ" && problem.choices) {
@@ -60,8 +61,74 @@ export function formatProblemView(problem: any, userRating?: number): ProblemVie
         tags: problem.tags,
         rating: problem.rating,
         userRating,
+        attemptCount,
         solutions: problem.solutions,
         subjectOrder: problem.Archetype?.Domain?.Subject?.order || 1
+    };
+}
+
+/**
+ * Maps a flat row from the raw SQL problem selection query to a ProblemView.
+ * The row contains all fields inline (no nested Prisma relations).
+ */
+export function formatProblemViewFromRow(row: {
+    id: string;
+    type: string;
+    promptLatex: string;
+    choices: any;
+    topic: string;
+    tags: string[];
+    rating: number;
+    solutions: string | null;
+    userRating: number;
+    attemptCount: number;
+    subjectOrder: number | null;
+}): ProblemView {
+    let choices: MCQChoice[] = [];
+
+    if (row.type === "MCQ" && row.choices) {
+        const rawChoices = row.choices;
+
+        if (typeof rawChoices === 'object' && !Array.isArray(rawChoices)) {
+            choices = Object.entries(rawChoices).map(([id, val]: [string, any]) => {
+                let content = "";
+                if (typeof val === 'string') {
+                    content = val;
+                } else if (val && typeof val === 'object') {
+                    content = val.content || val.latex || val.text || JSON.stringify(val);
+                } else {
+                    content = String(val);
+                }
+                return { id, content };
+            });
+        } else if (Array.isArray(rawChoices)) {
+            choices = rawChoices.map((val: any, index: number) => {
+                const id = String.fromCharCode(65 + index);
+                let content = "";
+                if (typeof val === 'string') {
+                    content = val;
+                } else if (val && typeof val === 'object') {
+                    content = val.content || val.latex || val.text || JSON.stringify(val);
+                } else {
+                    content = String(val);
+                }
+                return { id, content };
+            });
+        }
+    }
+
+    return {
+        id: row.id,
+        type: row.type as ProblemType,
+        promptLatex: row.promptLatex,
+        choices,
+        topic: row.topic,
+        tags: row.tags,
+        rating: row.rating,
+        userRating: row.userRating,
+        attemptCount: row.attemptCount,
+        solutions: row.solutions ?? undefined,
+        subjectOrder: row.subjectOrder ?? 1
     };
 }
 

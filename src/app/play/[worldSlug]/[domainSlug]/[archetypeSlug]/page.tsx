@@ -278,6 +278,12 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
 
                     <div style={{ display: 'flex', gap: '24px' }}>
                         <div className="rating-container" style={{ textAlign: 'right' }}>
+                            <span className="rating-label">History</span>
+                            <span className="rating-value" style={{ fontSize: '18px' }}>
+                                ATTEMPTS {problem.attemptCount ?? 0}
+                            </span>
+                        </div>
+                        <div className="rating-container" style={{ textAlign: 'right' }}>
                             <span className="rating-label">Status</span>
                             <span className="rating-value" style={{
                                 color: streak > 0 ? 'var(--accent)' : 'inherit',
