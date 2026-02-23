@@ -138,7 +138,7 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
     }, [problem, isVerified]);
 
     const handleSubmit = async () => {
-        if (!selectedChoice || !problem || isVerified) return;
+        if (!selectedChoice || !problem || isVerified || !prefetchedAnswer) return;
 
         setIsPulsing(true);
         setIsSubmitting(true);
@@ -412,7 +412,7 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
                             <button
                                 onClick={handleSubmit}
                                 className={`btn-submit ${isPulsing ? 'suspense' : ''}`}
-                                disabled={!selectedChoice || isSubmitting}
+                                disabled={!selectedChoice || isSubmitting || !prefetchedAnswer}
                                 style={{ flex: 1, maxWidth: '300px' }}
                             >
                                 {isPulsing ? "CALIBRATING..." : isSubmitting ? "PROCESSING..." : "Verify Calibration"}
