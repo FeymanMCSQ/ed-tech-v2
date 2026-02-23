@@ -229,7 +229,7 @@ export default function PlayPage({ params }: { params: Promise<{ worldSlug: stri
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isVerified, selectedChoice, isSubmitting, isPulsing, problem]);
+    }, [isVerified, selectedChoice, isSubmitting, isPulsing, problem, prefetchedAnswer]);
 
     if (loading) {
         return (
