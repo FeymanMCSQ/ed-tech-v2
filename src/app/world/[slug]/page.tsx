@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { WorldDetail, DomainView } from "@/domain/world";
 import { getDomainAccentColor } from "@/lib/colors";
-
+import { Copy, Check } from "lucide-react";
 export default function WorldPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const router = useRouter();
@@ -137,9 +137,26 @@ function DomainCard({
     return (
         <div
             className={`world-card ${domain.isEnrolled ? "enrolled" : ""}`}
-            style={{ '--accent': accentColor } as any}
+            style={{
+                '--accent': accentColor,
+                position: 'relative' // Needed for absolute positioning of the copy buttons
+            } as any}
             data-domain={worldSlug === 'math' ? 'mathematics' : worldSlug}
         >
+            {/* 3. Copy Interaction Group */}
+            <CopyButton
+                text={domain.id}
+                title="Copy Domain ID"
+                topOffset={12}
+                rightOffset={12}
+                activeColor="#60a5fa"
+            />
+            <CopyButton
+                text={`${domain.title}: ${domain.summary || "Explore the fundamental archetypes of this sector."}`}
+                title="Copy Domain Details"
+                topOffset={48}
+                rightOffset={12}
+            />
             <div className="world-content">
                 <h2>{domain.title}</h2>
                 <p className="tagline">{domain.summary || "Explore the fundamental archetypes of this sector."}</p>
@@ -189,5 +206,64 @@ function DomainCard({
                 {domain.isEnrolled && <span className="tier-label">ACTIVE</span>}
             </div>
         </div>
+    );
+}
+
+function CopyButton({
+    text,
+    title,
+    topOffset = 12,
+    rightOffset = 12,
+    activeColor = '#10b981'
+}: {
+    text: string;
+    title: string;
+    topOffset?: number;
+    rightOffset?: number;
+    activeColor?: string;
+}) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            style={{
+                position: 'absolute',
+                top: `${topOffset}px`,
+                right: `${rightOffset}px`,
+                zIndex: 10,
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '8px',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 200ms ease',
+                color: copied ? activeColor : 'rgba(255,255,255,0.4)',
+                opacity: copied ? 1 : 0.6
+            }}
+            className="copy-btn"
+            title={title}
+        >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            <style jsx>{`
+                .copy-btn:hover {
+                    background: rgba(255,255,255,0.08);
+                    color: white;
+                    opacity: 1;
+                }
+            `}</style>
+        </button>
     );
 }
