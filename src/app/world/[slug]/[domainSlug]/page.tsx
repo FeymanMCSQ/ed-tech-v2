@@ -234,28 +234,27 @@ function ArchetypeCard({
                 audio.play().catch(e => console.error("Audio playback stalled", e));
             }}
         >
-            {/* 1. Mastery Column */}
+            {/* 1. Mastery Column (Continuous) */}
             <div style={{
                 width: '12px',
                 background: 'rgba(0,0,0,0.3)',
                 borderRadius: '6px',
                 padding: '3px',
                 display: 'flex',
-                flexDirection: 'column-reverse',
-                gap: '4px',
+                alignItems: 'flex-end',
                 border: '1px solid rgba(255,255,255,0.05)',
                 flexShrink: 0
             }}>
-                {[1, 2, 3, 4, 5].map((step) => (
-                    <div key={step} style={{
-                        flex: 1,
-                        borderRadius: '3px',
-                        backgroundColor: step <= mastery ? accent : 'transparent',
-                        boxShadow: step <= mastery ? `0 0 10px ${accent}` : 'none',
-                        opacity: step <= mastery ? 1 : 0.05,
-                        transition: 'all 0.4s ease'
-                    }} />
-                ))}
+                <div style={{
+                    width: '100%',
+                    height: `${Math.min(100, Math.max(0, (rating / 1900) * 100))}%`,
+                    borderRadius: '3px',
+                    backgroundColor: accent,
+                    boxShadow: Math.min(100, Math.max(0, (rating / 1900) * 100)) > 0 ? `0 0 10px ${accent}` : 'none',
+                    opacity: 1,
+                    transition: 'all 0.4s ease',
+                    minHeight: Math.min(100, Math.max(0, (rating / 1900) * 100)) > 0 ? '4px' : '0'
+                }} />
             </div>
 
             {/* 2. Content Column */}
