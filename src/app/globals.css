@@ -462,6 +462,21 @@ button:disabled {
   color: var(--text-secondary);
   line-height: 1.6;
   min-height: 4.8em;
+  max-height: 4.8em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  transition: max-height 300ms ease, -webkit-line-clamp 0s 0s;
+}
+
+.world-card:hover .tagline {
+  max-height: 40em;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  display: block;
+  overflow: auto;
 }
 
 /* Vertical Mastery Ladder Preview */
