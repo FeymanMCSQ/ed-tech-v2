@@ -471,13 +471,7 @@ button:disabled {
   transition: max-height 300ms ease, -webkit-line-clamp 0s 0s;
 }
 
-.world-card:hover .tagline {
-  max-height: 40em;
-  -webkit-line-clamp: unset;
-  line-clamp: unset;
-  display: block;
-  overflow: auto;
-}
+
 
 /* Vertical Mastery Ladder Preview */
 .mastery-ladder {
