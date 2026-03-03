@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { buildPrompt } from '@/lib/prompts/factory';
 import { generateContent } from '@/lib/ai/generate';
+import { shuffleMcqChoices } from '@/domain/shuffleChoices';
 import { parseAndValidateAiBatch } from '@/lib/validators/parseAndValidateAiBatch';
 import { insertGeneratedProblems } from '@/lib/db/insertProblems';
 import { AiBatchError } from '@/lib/validators/errors';
@@ -50,6 +51,18 @@ export async function POST(req: NextRequest) {
 
                 // 3. Validate
                 const batch = parseAndValidateAiBatch(content);
+
+                // 3.5. Shuffle MCQ choices to eliminate position bias
+                for (const problem of batch.problems) {
+                    if (!problem.type || problem.type === 'MCQ') {
+                        const shuffled = shuffleMcqChoices(
+                            problem.choices as { id: 'A' | 'B' | 'C' | 'D'; latex: string }[],
+                            problem.correctChoice as 'A' | 'B' | 'C' | 'D'
+                        );
+                        (problem as any).choices = shuffled.choices;
+                        (problem as any).correctChoice = shuffled.correctChoice;
+                    }
+                }
 
                 // 4. Persistence
                 const { insertedCount } = await insertGeneratedProblems(batch.problems, archetypeId);
