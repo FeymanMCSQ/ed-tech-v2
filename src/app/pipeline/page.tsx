@@ -10,6 +10,7 @@ import {
     Sparkles,
     Search,
     TrendingUp,
+    Activity,
     ArrowRight
 } from 'lucide-react';
 
@@ -62,6 +63,13 @@ const pipelineModules = [
         path: '/pipeline/ratingChange',
         icon: TrendingUp,
         color: '#3b82f6' // Blue
+    },
+    {
+        title: 'Analytics',
+        description: 'Analyze attempt history and rating trends per archetype.',
+        path: '/pipeline/analytics',
+        icon: Activity,
+        color: '#14b8a6' // Teal
     }
 ];
 

@@ -11,6 +11,7 @@ import {
     Sparkles,
     Search,
     TrendingUp,
+    Activity,
     ChevronLeft,
     ChevronRight,
     LayoutDashboard
@@ -24,6 +25,7 @@ const pipelineRoutes = [
     { name: 'Generate', path: '/pipeline/generate', icon: Sparkles },
     { name: 'Lookup', path: '/pipeline/lookup', icon: Search },
     { name: 'Rating Change', path: '/pipeline/ratingChange', icon: TrendingUp },
+    { name: 'Analytics', path: '/pipeline/analytics', icon: Activity },
 ];
 
 export default function PipelineSidebar() {
